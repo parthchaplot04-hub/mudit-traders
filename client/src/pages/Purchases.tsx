@@ -258,7 +258,7 @@ export default function Purchases() {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-400 block">Rate ₹ (before GST)</label>
+                    <label className="text-[10px] text-slate-400 block">Rate ₹</label>
                     <input
                       type="number" step="0.01" value={line.rateBeforeGstRupees}
                       onChange={(e) => updateLine(idx, { rateBeforeGstRupees: e.target.value })}
