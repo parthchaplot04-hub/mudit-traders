@@ -32,6 +32,7 @@ interface CreateProductInput {
   gstRate: number;
   reorderLevel: number;
   reorderQuantity: number;
+  initialStock?: number;
   notes?: string;
 }
 
@@ -44,7 +45,7 @@ export async function createProduct(input: CreateProductInput, userId: string) {
     mrpPaise: input.mrpRupees !== undefined ? rupeesToPaise(input.mrpRupees) : undefined,
     sellingPricePaise: rupeesToPaise(input.sellingPriceRupees),
     purchaseCostPaise: rupeesToPaise(input.purchaseCostRupees),
-    currentStock: 0,
+    currentStock: input.initialStock || 0,
   });
 
   await AuditLog.create({
@@ -54,6 +55,21 @@ export async function createProduct(input: CreateProductInput, userId: string) {
     entityId: product._id,
     newValue: { productCode: product.productCode, productName: product.productName },
   });
+
+  if (input.initialStock && input.initialStock > 0) {
+    // Requires importing StockTransaction at the top of the file.
+    const { StockTransaction } = await import("../models/StockTransaction");
+    await StockTransaction.create({
+      productId: product._id,
+      transactionType: "OTHER_IN",
+      quantity: input.initialStock,
+      unit: product.stockUnit,
+      stockBeforeQty: 0,
+      stockAfterQty: input.initialStock,
+      userId,
+      notes: "Initial stock setting",
+    });
+  }
 
   return product;
 }

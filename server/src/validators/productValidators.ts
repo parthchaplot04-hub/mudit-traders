@@ -22,6 +22,7 @@ export const createProductSchema = z.object({
   gstRate: z.number().min(0).max(28),
   reorderLevel: z.number().nonnegative(),
   reorderQuantity: z.number().nonnegative(),
+  initialStock: z.number().nonnegative().optional(),
   notes: z.string().optional(),
 });
 

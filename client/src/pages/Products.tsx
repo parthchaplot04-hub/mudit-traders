@@ -25,6 +25,7 @@ interface ProductForm {
   gstRate: number;
   reorderLevel: number;
   reorderQuantity: number;
+  initialStock?: number;
 }
 
 export default function Products() {
@@ -40,7 +41,7 @@ export default function Products() {
   });
 
   const { register, handleSubmit, reset } = useForm<ProductForm>({
-    defaultValues: { gstRate: 0, conversionFactor: 1 },
+    defaultValues: { gstRate: 0, purchaseCostRupees: 0, conversionFactor: 1, initialStock: 0 },
   });
 
   const createMutation = useMutation({
@@ -168,18 +169,14 @@ export default function Products() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-slate-500">Selling price (₹)</label>
                   <input {...register("sellingPriceRupees", { required: true, valueAsNumber: true })} type="number" step="0.01" className="input w-full" />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500">Purchase cost (₹)</label>
-                  <input {...register("purchaseCostRupees", { required: true, valueAsNumber: true })} type="number" step="0.01" className="input w-full" />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-500">GST %</label>
-                  <input {...register("gstRate", { required: true, valueAsNumber: true })} type="number" className="input w-full" />
+                  <label className="text-xs text-slate-500">Current available quantity</label>
+                  <input {...register("initialStock", { valueAsNumber: true })} type="number" step="0.001" className="input w-full" />
                 </div>
               </div>
 
