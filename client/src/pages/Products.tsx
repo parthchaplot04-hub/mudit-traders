@@ -165,7 +165,7 @@ export default function Products() {
                 </label>
                 <input
                   {...register("conversionFactor", { required: true, valueAsNumber: true })}
-                  type="number" step="0.001" className="input w-full"
+                  type="number" step="1" className="input w-full"
                 />
               </div>
 
