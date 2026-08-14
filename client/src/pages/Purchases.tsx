@@ -7,8 +7,8 @@ import type { Product, Supplier } from "../types";
 
 interface DraftLine {
   product: Product;
-  purchaseQuantity: number;
-  rateBeforeGstRupees: number;
+  purchaseQuantity: number | string;
+  rateBeforeGstRupees: number | string;
 }
 
 export default function Purchases() {
@@ -39,7 +39,7 @@ export default function Purchases() {
   });
 
   function addLine(product: Product) {
-    setLines((prev) => [...prev, { product, purchaseQuantity: 1, rateBeforeGstRupees: 0 }]);
+    setLines((prev) => [...prev, { product, purchaseQuantity: 1, rateBeforeGstRupees: "" }]);
     setProductQuery("");
   }
   function removeLine(idx: number) {
@@ -58,8 +58,8 @@ export default function Purchases() {
         paymentType,
         items: lines.map((l) => ({
           productId: l.product._id,
-          purchaseQuantity: l.purchaseQuantity,
-          rateBeforeGstRupees: l.rateBeforeGstRupees,
+          purchaseQuantity: parseFloat(l.purchaseQuantity as string) || 0,
+          rateBeforeGstRupees: parseFloat(l.rateBeforeGstRupees as string) || 0,
         })),
       };
       return (await api.post("/purchases", payload)).data;
@@ -178,14 +178,14 @@ export default function Purchases() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-800 truncate">{line.product.productName}</p>
                     <p className="text-xs text-slate-400">
-                      = {(line.purchaseQuantity * line.product.conversionFactor).toFixed(3)} {line.product.stockUnit} added to stock
+                      = {((parseFloat(line.purchaseQuantity as string) || 0) * line.product.conversionFactor).toFixed(3)} {line.product.stockUnit} added to stock
                     </p>
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-400 block">Qty ({line.product.purchaseUnit})</label>
                     <input
                       type="number" step="0.001" value={line.purchaseQuantity}
-                      onChange={(e) => updateLine(idx, { purchaseQuantity: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => updateLine(idx, { purchaseQuantity: e.target.value })}
                       className="w-20 border border-slate-200 rounded-lg py-1 px-2 text-sm"
                     />
                   </div>
@@ -193,7 +193,7 @@ export default function Purchases() {
                     <label className="text-[10px] text-slate-400 block">Rate ₹ (before GST)</label>
                     <input
                       type="number" step="0.01" value={line.rateBeforeGstRupees}
-                      onChange={(e) => updateLine(idx, { rateBeforeGstRupees: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => updateLine(idx, { rateBeforeGstRupees: e.target.value })}
                       className="w-24 border border-slate-200 rounded-lg py-1 px-2 text-sm"
                     />
                   </div>
