@@ -30,7 +30,7 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:flex-col w-60 bg-slate-900 text-slate-100 shrink-0">
+      <aside className="print-hidden hidden md:flex md:flex-col w-60 bg-slate-900 text-slate-100 shrink-0">
         <div className="px-5 py-5 border-b border-slate-800">
           <h1 className="text-lg font-bold leading-tight">Mudit Traders</h1>
           <p className="text-xs text-slate-400 mt-0.5">{user?.name} · {user?.role}</p>
@@ -61,7 +61,7 @@ export default function AppLayout() {
       </aside>
 
       {/* Mobile top bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-slate-900 text-white flex items-center justify-between px-4 py-3">
+      <div className="print-hidden md:hidden fixed top-0 left-0 right-0 z-40 bg-slate-900 text-white flex items-center justify-between px-4 py-3">
         <h1 className="text-base font-bold">Mudit Traders</h1>
         <button onClick={() => setMobileOpen((o) => !o)} aria-label="Menu">
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
@@ -103,7 +103,7 @@ export default function AppLayout() {
       </main>
 
       {/* Mobile bottom nav for the most-used screens */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 flex justify-around py-2">
+      <nav className="print-hidden md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 flex justify-around py-2">
         {[navItems[0], navItems[1], navItems[2], navItems[4]].map((item) => (
           <NavLink
             key={item.to}

@@ -7,3 +7,36 @@
     @apply px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500;
   }
 }
+
+@media print {
+  /* Hide the entire app by default on print, except things we explicitly show */
+  body {
+    background-color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .print-hidden {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  @page {
+    margin: 1cm;
+  }
+}
+
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}

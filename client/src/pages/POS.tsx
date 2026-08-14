@@ -5,6 +5,7 @@ import { api, getApiErrorMessage } from "../lib/api";
 import { formatPaise } from "../utils/format";
 import type { CartLine, Product } from "../types";
 import { useAuth } from "../hooks/useAuth";
+import { Invoice } from "../components/Invoice";
 
 type PaymentType = "CASH" | "UPI" | "CHEQUE" | "CREDIT";
 
@@ -109,8 +110,9 @@ export default function POS() {
   }
 
   return (
-    <div className="grid lg:grid-cols-5 gap-6">
-      {/* Search + cart */}
+    <div>
+      <div className="print-hidden grid lg:grid-cols-5 gap-6">
+        {/* Search + cart */}
       <div className="lg:col-span-3 space-y-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -264,19 +266,42 @@ export default function POS() {
             </p>
           )}
 
-          <button
-            onClick={completeSale}
-            disabled={cart.length === 0 || saleMutation.isPending}
-            className="w-full py-3.5 rounded-lg bg-emerald-600 text-white font-bold text-base hover:bg-emerald-700 disabled:opacity-50"
-          >
-            {saleMutation.isPending ? "Processing..." : `Complete Sale — ${formatPaise(Math.max(totalPaise, 0))}`}
-          </button>
+          {!lastBill ? (
+            <button
+              onClick={completeSale}
+              disabled={cart.length === 0 || saleMutation.isPending}
+              className="w-full py-3.5 rounded-lg bg-emerald-600 text-white font-bold text-base hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {saleMutation.isPending ? "Processing..." : `Complete Sale — ${formatPaise(Math.max(totalPaise, 0))}`}
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <button
+                onClick={() => window.print()}
+                className="w-full py-3.5 rounded-lg bg-slate-800 text-white font-bold text-base hover:bg-slate-900"
+              >
+                Print Bill
+              </button>
+              <button
+                onClick={() => setLastBill(null)}
+                className="w-full py-3.5 rounded-lg bg-slate-100 text-slate-700 font-bold text-base hover:bg-slate-200"
+              >
+                Start New Sale
+              </button>
+            </div>
+          )}
 
           {!isOwner && (
             <p className="text-xs text-slate-400 text-center">Prices are set by the owner and cannot be edited here.</p>
           )}
         </div>
       </div>
+      </div>
+      
+      <Invoice 
+        sale={lastBill} 
+        customerName={paymentType === "CREDIT" ? customers?.items.find(c => c._id === customerId)?.name : undefined} 
+      />
     </div>
   );
 }
