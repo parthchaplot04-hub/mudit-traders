@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, X, Edit2 } from "lucide-react";
+import { Plus, Trash2, X, Edit2, Search } from "lucide-react";
 import { api, getApiErrorMessage } from "../lib/api";
 import { formatPaise } from "../utils/format";
 import type { Product, Supplier } from "../types";
@@ -21,6 +21,7 @@ export default function Purchases() {
   const [paymentType, setPaymentType] = useState<"CASH" | "UPI" | "CHEQUE" | "CREDIT">("CREDIT");
   const [lines, setLines] = useState<DraftLine[]>([]);
   const [productQuery, setProductQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const { data: purchases, isLoading } = useQuery<{ items: any[] }>({
@@ -112,6 +113,16 @@ export default function Purchases() {
         </button>
       </div>
 
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by invoice number, supplier name, or date..."
+          className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
+
       <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
@@ -126,8 +137,17 @@ export default function Purchases() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {isLoading && <tr><td colSpan={5} className="text-center py-10 text-slate-400">Loading...</td></tr>}
-            {purchases?.items.map((p) => (
+            {isLoading && <tr><td colSpan={7} className="text-center py-10 text-slate-400">Loading...</td></tr>}
+            {purchases?.items
+              .filter((p) => {
+                if (!searchQuery) return true;
+                const q = searchQuery.toLowerCase();
+                const invoiceMatch = p.invoiceNumber.toLowerCase().includes(q);
+                const supplierMatch = (suppliers?.items.find((s) => s._id === p.supplierId)?.supplierName || "Unknown").toLowerCase().includes(q);
+                const dateMatch = new Date(p.invoiceDate).toLocaleDateString("en-IN").includes(q);
+                return invoiceMatch || supplierMatch || dateMatch;
+              })
+              .map((p) => (
               <tr key={p._id} className="hover:bg-slate-50">
                 <td className="px-4 py-3 font-medium text-slate-800">{p.invoiceNumber}</td>
                 <td className="px-4 py-3 text-slate-800 font-medium">
