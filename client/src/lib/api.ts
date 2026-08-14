@@ -32,8 +32,11 @@ api.interceptors.response.use(
 );
 
 export function getApiErrorMessage(err: unknown): string {
+  console.error("API Error details:", err);
   if (axios.isAxiosError(err)) {
-    return err.response?.data?.error || err.message || "Something went wrong.";
+    if (err.response?.data?.error) return err.response.data.error;
+    if (err.response?.data?.details) return JSON.stringify(err.response.data.details);
+    return err.message || "Axios Error: Something went wrong.";
   }
-  return "Something went wrong.";
+  return err instanceof Error ? err.message : String(err);
 }
