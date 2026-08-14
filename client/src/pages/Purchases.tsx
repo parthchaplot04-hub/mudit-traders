@@ -117,6 +117,7 @@ export default function Purchases() {
           <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
             <tr>
               <th className="text-left px-4 py-3">Invoice</th>
+              <th className="text-left px-4 py-3">Supplier</th>
               <th className="text-left px-4 py-3">Date</th>
               <th className="text-left px-4 py-3">Items</th>
               <th className="text-left px-4 py-3">Payment</th>
@@ -129,6 +130,9 @@ export default function Purchases() {
             {purchases?.items.map((p) => (
               <tr key={p._id} className="hover:bg-slate-50">
                 <td className="px-4 py-3 font-medium text-slate-800">{p.invoiceNumber}</td>
+                <td className="px-4 py-3 text-slate-800 font-medium">
+                  {suppliers?.items.find((s) => s._id === p.supplierId)?.supplierName || "Unknown"}
+                </td>
                 <td className="px-4 py-3 text-slate-600">{new Date(p.invoiceDate).toLocaleDateString("en-IN")}</td>
                 <td className="px-4 py-3 text-slate-600">{p.items.length} product(s)</td>
                 <td className="px-4 py-3 text-slate-600">{p.paymentType}</td>
@@ -165,7 +169,7 @@ export default function Purchases() {
               </tr>
             ))}
             {purchases && purchases.items.length === 0 && !isLoading && (
-              <tr><td colSpan={5} className="text-center py-10 text-slate-400">No purchases recorded yet</td></tr>
+              <tr><td colSpan={7} className="text-center py-10 text-slate-400">No purchases recorded yet</td></tr>
             )}
           </tbody>
         </table>
