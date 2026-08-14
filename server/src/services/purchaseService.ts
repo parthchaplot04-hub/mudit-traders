@@ -22,7 +22,7 @@ interface CreatePurchaseItemInput {
 
 interface CreatePurchaseInput {
   supplierId: string;
-  invoiceNumber: string;
+  invoiceNumber?: string;
   invoiceDate: string;
   items: CreatePurchaseItemInput[];
   paymentType: "CASH" | "UPI" | "CHEQUE" | "CREDIT";
@@ -130,7 +130,7 @@ export async function createPurchase(input: CreatePurchaseInput, userId: string)
           {
             _id: purchaseId,
             supplierId: supplier._id,
-            invoiceNumber: input.invoiceNumber,
+            invoiceNumber: input.invoiceNumber || "",
             invoiceDate: new Date(input.invoiceDate),
             items,
             taxableValuePaise,
@@ -307,7 +307,7 @@ export async function updatePurchase(purchaseId: string, input: CreatePurchaseIn
 
       // --- STEP 3: UPDATE PURCHASE DOC ---
       oldPurchase.supplierId = newSupplier._id;
-      oldPurchase.invoiceNumber = input.invoiceNumber;
+      oldPurchase.invoiceNumber = input.invoiceNumber || "";
       oldPurchase.invoiceDate = new Date(input.invoiceDate);
       oldPurchase.items = items as any; // mongoose typed array handling
       oldPurchase.taxableValuePaise = taxableValuePaise;

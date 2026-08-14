@@ -85,8 +85,8 @@ export default function Purchases() {
 
   function submit() {
     setError(null);
-    if (!supplierId || !invoiceNumber || lines.length === 0) {
-      setError("Select a supplier, enter an invoice number, and add at least one product.");
+    if (!supplierId || lines.length === 0) {
+      setError("Select a supplier and add at least one product.");
       return;
     }
     createMutation.mutate();
@@ -149,7 +149,7 @@ export default function Purchases() {
               })
               .map((p) => (
               <tr key={p._id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-medium text-slate-800">{p.invoiceNumber}</td>
+                <td className="px-4 py-3 font-medium text-slate-800">{p.invoiceNumber || "-"}</td>
                 <td className="px-4 py-3 text-slate-800 font-medium">
                   {suppliers?.items.find((s) => s._id === p.supplierId)?.supplierName || "Unknown"}
                 </td>
@@ -214,7 +214,7 @@ export default function Purchases() {
                 <option value="UPI">UPI</option>
                 <option value="CHEQUE">Cheque</option>
               </select>
-              <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="Invoice number" className="input" />
+              <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="Invoice number (optional)" className="input" />
               <input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="input" />
             </div>
 

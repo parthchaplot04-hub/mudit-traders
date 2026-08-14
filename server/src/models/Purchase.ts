@@ -70,7 +70,7 @@ export interface IPurchase extends Document {
 const purchaseSchema = new Schema<IPurchase>(
   {
     supplierId: { type: Schema.Types.ObjectId, ref: "Supplier", required: true, index: true },
-    invoiceNumber: { type: String, required: true },
+    invoiceNumber: { type: String, default: "" },
     invoiceDate: { type: Date, required: true },
     items: { type: [purchaseItemSchema], required: true, validate: (v: unknown[]) => v.length > 0 },
     taxableValuePaise: { type: Number, required: true },

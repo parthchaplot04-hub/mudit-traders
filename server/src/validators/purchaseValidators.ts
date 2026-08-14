@@ -8,7 +8,7 @@ export const purchaseItemInputSchema = z.object({
 
 export const createPurchaseSchema = z.object({
   supplierId: z.string().min(1),
-  invoiceNumber: z.string().min(1),
+  invoiceNumber: z.string().optional(),
   invoiceDate: z.string().min(1), // ISO date string
   items: z.array(purchaseItemInputSchema).min(1),
   paymentType: z.enum(["CASH", "UPI", "CHEQUE", "CREDIT"]),
