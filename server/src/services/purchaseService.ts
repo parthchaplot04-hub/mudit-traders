@@ -172,3 +172,178 @@ export async function createPurchase(input: CreatePurchaseInput, userId: string)
     await session.endSession();
   }
 }
+
+export async function updatePurchase(purchaseId: string, input: CreatePurchaseInput, userId: string) {
+  const session = await mongoose.startSession();
+  try {
+    let updatedPurchaseDoc;
+
+    await session.withTransaction(async () => {
+      const oldPurchase = await Purchase.findById(purchaseId).session(session);
+      if (!oldPurchase) throw new PurchaseError("Purchase not found", 404);
+
+      const oldSupplier = await Supplier.findById(oldPurchase.supplierId).session(session);
+      if (!oldSupplier) throw new PurchaseError("Original supplier not found", 404);
+
+      // --- STEP 1: ROLLBACK OLD PURCHASE ---
+      // Reverse stock additions
+      for (const oldItem of oldPurchase.items) {
+        const product = await Product.findById(oldItem.productId).session(session);
+        if (product) {
+          const stockBefore = product.currentStock;
+          const stockAfter = stockBefore - oldItem.stockQuantity;
+          product.currentStock = stockAfter;
+          await product.save({ session });
+
+          await StockTransaction.create(
+            [
+              {
+                productId: product._id,
+                transactionType: "NEGATIVE_ADJUSTMENT",
+                quantity: oldItem.stockQuantity,
+                unit: product.stockUnit,
+                stockBeforeQty: stockBefore,
+                stockAfterQty: stockAfter,
+                referenceId: oldPurchase._id,
+                referenceType: "PurchaseEditRollback",
+                userId,
+                notes: `Reversal for editing purchase ${oldPurchase.invoiceNumber}`,
+              },
+            ],
+            { session }
+          );
+        }
+      }
+
+      // Reverse supplier outstanding balance if credit
+      if (oldPurchase.paymentType === "CREDIT") {
+        oldSupplier.currentOutstandingPaise -= oldPurchase.totalAmountPaise;
+        await oldSupplier.save({ session });
+
+        await SupplierLedgerEntry.create(
+          [
+            {
+              supplierId: oldSupplier._id,
+              type: "PAYMENT_OUT",
+              amountPaise: oldPurchase.totalAmountPaise,
+              referenceId: oldPurchase._id,
+              balanceAfterPaise: oldSupplier.currentOutstandingPaise,
+              userId,
+              notes: `Reversal for editing purchase ${oldPurchase.invoiceNumber}`,
+            },
+          ],
+          { session }
+        );
+      }
+
+      // --- STEP 2: APPLY NEW PURCHASE ---
+      const newSupplier = await Supplier.findById(input.supplierId).session(session);
+      if (!newSupplier) throw new PurchaseError("New supplier not found", 404);
+
+      const items: IPurchaseItem[] = [];
+      let taxableValuePaise = 0;
+      let totalGstPaise = 0;
+      let totalAmountPaise = 0;
+
+      for (const line of input.items) {
+        const product = await Product.findById(line.productId).session(session);
+        if (!product) throw new PurchaseError(`Product ${line.productId} not found`, 404);
+
+        const stockQuantity = convertPurchaseToStock({
+          purchaseQuantity: line.purchaseQuantity,
+          conversionFactor: product.conversionFactor,
+        });
+
+        const rateBeforeGstPaise = rupeesToPaise(line.rateBeforeGstRupees);
+        const lineTaxableValuePaise = Math.round(rateBeforeGstPaise * line.purchaseQuantity);
+        const lineGstPaise = applyPercentage(lineTaxableValuePaise, product.gstRate);
+        const cgstPaise = Math.round(lineGstPaise / 2);
+        const sgstPaise = lineGstPaise - cgstPaise;
+        const lineTotalPaise = lineTaxableValuePaise + lineGstPaise;
+
+        items.push({
+          productId: product._id,
+          productName: product.productName,
+          purchaseUnit: product.purchaseUnit,
+          purchaseQuantity: line.purchaseQuantity,
+          conversionFactor: product.conversionFactor,
+          stockQuantity,
+          rateBeforeGstPaise,
+          gstRate: product.gstRate,
+          taxableValuePaise: lineTaxableValuePaise,
+          cgstPaise,
+          sgstPaise,
+          igstPaise: 0,
+          totalPaise: lineTotalPaise,
+        });
+
+        taxableValuePaise += lineTaxableValuePaise;
+        totalGstPaise += lineGstPaise;
+        totalAmountPaise += lineTotalPaise;
+
+        const stockBefore = product.currentStock;
+        const stockAfter = stockBefore + stockQuantity;
+        product.currentStock = stockAfter;
+        product.purchaseCostPaise = Math.round(rateBeforeGstPaise / product.conversionFactor);
+        await product.save({ session });
+
+        await StockTransaction.create(
+          [
+            {
+              productId: product._id,
+              transactionType: "PURCHASE",
+              quantity: stockQuantity,
+              unit: product.stockUnit,
+              stockBeforeQty: stockBefore,
+              stockAfterQty: stockAfter,
+              referenceId: oldPurchase._id,
+              referenceType: "PurchaseEdit",
+              userId,
+            },
+          ],
+          { session }
+        );
+      }
+
+      // --- STEP 3: UPDATE PURCHASE DOC ---
+      oldPurchase.supplierId = newSupplier._id;
+      oldPurchase.invoiceNumber = input.invoiceNumber;
+      oldPurchase.invoiceDate = new Date(input.invoiceDate);
+      oldPurchase.items = items as any; // mongoose typed array handling
+      oldPurchase.taxableValuePaise = taxableValuePaise;
+      oldPurchase.totalGstPaise = totalGstPaise;
+      oldPurchase.totalAmountPaise = totalAmountPaise;
+      oldPurchase.paymentType = input.paymentType;
+      oldPurchase.dueDate = input.dueDate ? new Date(input.dueDate) : undefined;
+      oldPurchase.notes = input.notes;
+      
+      await oldPurchase.save({ session });
+      updatedPurchaseDoc = oldPurchase;
+
+      // --- Supplier outstanding (credit purchases only) ---
+      if (input.paymentType === "CREDIT") {
+        newSupplier.currentOutstandingPaise += totalAmountPaise;
+        await newSupplier.save({ session });
+
+        await SupplierLedgerEntry.create(
+          [
+            {
+              supplierId: newSupplier._id,
+              type: "PURCHASE",
+              amountPaise: totalAmountPaise,
+              referenceId: oldPurchase._id,
+              balanceAfterPaise: newSupplier.currentOutstandingPaise,
+              userId,
+              notes: `Edited purchase ${oldPurchase.invoiceNumber}`,
+            },
+          ],
+          { session }
+        );
+      }
+    });
+
+    return updatedPurchaseDoc;
+  } finally {
+    await session.endSession();
+  }
+}

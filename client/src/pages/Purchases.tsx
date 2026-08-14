@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, Edit2 } from "lucide-react";
 import { api, getApiErrorMessage } from "../lib/api";
 import { formatPaise } from "../utils/format";
 import type { Product, Supplier } from "../types";
@@ -14,6 +14,7 @@ interface DraftLine {
 export default function Purchases() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
   const [supplierId, setSupplierId] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -62,6 +63,9 @@ export default function Purchases() {
           rateBeforeGstRupees: parseFloat(l.rateBeforeGstRupees as string) || 0,
         })),
       };
+      if (editingPurchaseId) {
+        return (await api.put(`/purchases/${editingPurchaseId}`, payload)).data;
+      }
       return (await api.post("/purchases", payload)).data;
     },
     onSuccess: () => {
@@ -69,6 +73,7 @@ export default function Purchases() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       setShowForm(false);
+      setEditingPurchaseId(null);
       setLines([]);
       setSupplierId("");
       setInvoiceNumber("");
@@ -91,7 +96,16 @@ export default function Purchases() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Purchases</h1>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            setEditingPurchaseId(null);
+            setSupplierId("");
+            setInvoiceNumber("");
+            setInvoiceDate(new Date().toISOString().slice(0, 10));
+            setPaymentType("CREDIT");
+            setLines([]);
+            setError(null);
+            setShowForm(true);
+          }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700"
         >
           <Plus size={16} /> New Purchase
@@ -107,6 +121,7 @@ export default function Purchases() {
               <th className="text-left px-4 py-3">Items</th>
               <th className="text-left px-4 py-3">Payment</th>
               <th className="text-right px-4 py-3">Total</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -118,6 +133,35 @@ export default function Purchases() {
                 <td className="px-4 py-3 text-slate-600">{p.items.length} product(s)</td>
                 <td className="px-4 py-3 text-slate-600">{p.paymentType}</td>
                 <td className="px-4 py-3 text-right font-semibold text-slate-800">{formatPaise(p.totalAmountPaise)}</td>
+                <td className="px-4 py-3 text-right">
+                  <button
+                    onClick={() => {
+                      setEditingPurchaseId(p._id);
+                      setSupplierId(p.supplierId);
+                      setInvoiceNumber(p.invoiceNumber);
+                      setInvoiceDate(new Date(p.invoiceDate).toISOString().slice(0, 10));
+                      setPaymentType(p.paymentType as any);
+                      setLines(
+                        p.items.map((item: any) => ({
+                          product: {
+                            _id: item.productId,
+                            productName: item.productName,
+                            purchaseUnit: item.purchaseUnit,
+                            conversionFactor: item.conversionFactor,
+                            stockUnit: "",
+                          } as any,
+                          purchaseQuantity: item.purchaseQuantity,
+                          rateBeforeGstRupees: item.rateBeforeGstPaise / 100,
+                        }))
+                      );
+                      setError(null);
+                      setShowForm(true);
+                    }}
+                    className="text-slate-400 hover:text-emerald-600 transition-colors p-1"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                </td>
               </tr>
             ))}
             {purchases && purchases.items.length === 0 && !isLoading && (
@@ -131,7 +175,7 @@ export default function Purchases() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-slate-900">New Purchase</h2>
+              <h2 className="text-lg font-bold text-slate-900">{editingPurchaseId ? "Edit Purchase" : "New Purchase"}</h2>
               <button onClick={() => setShowForm(false)}><X size={20} /></button>
             </div>
 
@@ -212,7 +256,7 @@ export default function Purchases() {
               disabled={createMutation.isPending}
               className="w-full py-3 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-60"
             >
-              {createMutation.isPending ? "Saving..." : "Save Purchase"}
+              {createMutation.isPending ? "Saving..." : (editingPurchaseId ? "Save Changes" : "Save Purchase")}
             </button>
           </div>
         </div>

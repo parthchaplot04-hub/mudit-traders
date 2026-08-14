@@ -8,5 +8,6 @@ router.use(requireAuth);
 router.get("/", purchaseController.listPurchases);
 router.get("/:id", purchaseController.getPurchase);
 router.post("/", requireRole("OWNER", "ADMIN"), purchaseController.createPurchase);
+router.put("/:id", requireRole("OWNER", "ADMIN"), purchaseController.updatePurchase);
 
 export default router;

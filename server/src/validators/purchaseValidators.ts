@@ -15,3 +15,5 @@ export const createPurchaseSchema = z.object({
   dueDate: z.string().optional(),
   notes: z.string().optional(),
 });
+
+export const updatePurchaseSchema = createPurchaseSchema;
