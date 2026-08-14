@@ -8,18 +8,13 @@ import Reorder from "./pages/Reorder";
 import Wastage from "./pages/Wastage";
 import Stocktake from "./pages/Stocktake";
 import AppLayout from "./layouts/AppLayout";
-import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
     <Routes>
       <Route
         path="/"
-        element={
-          <ProtectedRoute>
-            <AppLayout />
-          </ProtectedRoute>
-        }
+        element={<AppLayout />}
       >
         <Route index element={<Dashboard />} />
         <Route path="pos" element={<POS />} />
