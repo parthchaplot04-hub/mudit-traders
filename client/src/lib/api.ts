@@ -5,7 +5,7 @@ import axios from "axios";
  * (spec section 60). Every request/service module imports this instead
  * of calling axios/fetch directly against a hardcoded URL.
  */
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "/api" : "http://localhost:5001/api");
 
 export const api = axios.create({ baseURL: API_URL });
 
