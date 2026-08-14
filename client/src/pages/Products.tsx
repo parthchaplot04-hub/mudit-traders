@@ -34,6 +34,7 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery<{ items: Product[] }>({
     queryKey: ["products", search],
@@ -48,9 +49,10 @@ export default function Products() {
     mutationFn: async (form: ProductForm) => (await api.post("/products", form)).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      setShowForm(false);
       reset();
       setFormError(null);
+      setFormSuccess("Product added successfully! You can add another.");
+      setTimeout(() => setFormSuccess(null), 3000);
     },
     onError: (err) => setFormError(getApiErrorMessage(err)),
   });
@@ -192,6 +194,7 @@ export default function Products() {
               </div>
 
               {formError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{formError}</p>}
+              {formSuccess && <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">{formSuccess}</p>}
 
               <button
                 type="submit"
