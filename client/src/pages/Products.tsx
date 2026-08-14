@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { Search, Plus, X } from "lucide-react";
+import { Search, Plus, X, Edit2 } from "lucide-react";
 import { api, getApiErrorMessage } from "../lib/api";
 import { formatPaise } from "../utils/format";
 import type { Product } from "../types";
@@ -33,6 +33,7 @@ export default function Products() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
@@ -45,14 +46,24 @@ export default function Products() {
     defaultValues: { gstRate: 0, purchaseCostRupees: 0, conversionFactor: 1, initialStock: 0 },
   });
 
-  const createMutation = useMutation({
-    mutationFn: async (form: ProductForm) => (await api.post("/products", form)).data,
+  const saveMutation = useMutation({
+    mutationFn: async (form: ProductForm) => {
+      if (editingProduct) {
+        return (await api.put(`/products/${editingProduct._id}`, form)).data;
+      }
+      return (await api.post("/products", form)).data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      reset();
       setFormError(null);
-      setFormSuccess("Product added successfully! You can add another.");
-      setTimeout(() => setFormSuccess(null), 3000);
+      if (editingProduct) {
+        setShowForm(false);
+        setEditingProduct(null);
+      } else {
+        reset();
+        setFormSuccess("Product added successfully! You can add another.");
+        setTimeout(() => setFormSuccess(null), 3000);
+      }
     },
     onError: (err) => setFormError(getApiErrorMessage(err)),
   });
@@ -72,7 +83,13 @@ export default function Products() {
           )}
           {isOwner && (
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => {
+                setEditingProduct(null);
+                reset({ gstRate: 0, purchaseCostRupees: 0, conversionFactor: 1, initialStock: 0 });
+                setFormError(null);
+                setFormSuccess(null);
+                setShowForm(true);
+              }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700"
             >
               <Plus size={16} /> Add Product
@@ -100,6 +117,7 @@ export default function Products() {
               <th className="text-right px-4 py-3">Stock</th>
               <th className="text-right px-4 py-3">Price</th>
               <th className="text-left px-4 py-3">Status</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -122,6 +140,37 @@ export default function Products() {
                 <td className="px-4 py-3">
                   <StatusBadge status={p.reorderStatus || (p.currentStock <= p.reorderLevel ? "ORDER_REQUIRED" : "OK")} />
                 </td>
+                <td className="px-4 py-3 text-right">
+                  {isOwner && (
+                    <button
+                      onClick={() => {
+                        setEditingProduct(p);
+                        reset({
+                          productCode: p.productCode,
+                          productName: p.productName,
+                          hindiName: p.hindiName || "",
+                          category: p.category,
+                          stockUnit: p.stockUnit,
+                          purchaseUnit: p.purchaseUnit,
+                          salesUnit: p.salesUnit,
+                          conversionFactor: p.conversionFactor,
+                          sellingPriceRupees: p.sellingPricePaise / 100,
+                          purchaseCostRupees: p.purchaseCostPaise / 100,
+                          gstRate: p.gstRate,
+                          reorderLevel: p.reorderLevel,
+                          reorderQuantity: p.reorderQuantity,
+                          initialStock: undefined,
+                        });
+                        setFormError(null);
+                        setFormSuccess(null);
+                        setShowForm(true);
+                      }}
+                      className="text-slate-400 hover:text-emerald-600 transition-colors p-1"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
             {data && data.items.length === 0 && !isLoading && (
@@ -135,11 +184,11 @@ export default function Products() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-slate-900">Add Product</h2>
+              <h2 className="text-lg font-bold text-slate-900">{editingProduct ? "Edit Product" : "Add Product"}</h2>
               <button onClick={() => setShowForm(false)}><X size={20} /></button>
             </div>
             <form
-              onSubmit={handleSubmit((data) => createMutation.mutate(data))}
+              onSubmit={handleSubmit((data) => saveMutation.mutate(data))}
               className="space-y-3"
             >
               <div className="grid grid-cols-2 gap-3">
@@ -176,10 +225,12 @@ export default function Products() {
                   <label className="text-xs text-slate-500">Selling price (₹)</label>
                   <input {...register("sellingPriceRupees", { required: true, valueAsNumber: true })} type="number" step="0.01" className="input w-full" />
                 </div>
-                <div>
-                  <label className="text-xs text-slate-500">Current available quantity</label>
-                  <input {...register("initialStock", { valueAsNumber: true })} type="number" step="0.001" className="input w-full" />
-                </div>
+                {!editingProduct && (
+                  <div>
+                    <label className="text-xs text-slate-500">Current available quantity</label>
+                    <input {...register("initialStock", { valueAsNumber: true })} type="number" step="0.001" className="input w-full" />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -198,10 +249,10 @@ export default function Products() {
 
               <button
                 type="submit"
-                disabled={createMutation.isPending}
+                disabled={saveMutation.isPending}
                 className="w-full py-3 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-60"
               >
-                {createMutation.isPending ? "Saving..." : "Save Product"}
+                {saveMutation.isPending ? "Saving..." : (editingProduct ? "Save Changes" : "Save Product")}
               </button>
             </form>
           </div>
