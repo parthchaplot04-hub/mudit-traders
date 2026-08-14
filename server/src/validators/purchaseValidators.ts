@@ -1,0 +1,17 @@
+import { z } from "zod";
+
+export const purchaseItemInputSchema = z.object({
+  productId: z.string().min(1),
+  purchaseQuantity: z.number().positive(),
+  rateBeforeGstRupees: z.number().nonnegative(),
+});
+
+export const createPurchaseSchema = z.object({
+  supplierId: z.string().min(1),
+  invoiceNumber: z.string().min(1),
+  invoiceDate: z.string().min(1), // ISO date string
+  items: z.array(purchaseItemInputSchema).min(1),
+  paymentType: z.enum(["CASH", "UPI", "CHEQUE", "CREDIT"]),
+  dueDate: z.string().optional(),
+  notes: z.string().optional(),
+});
