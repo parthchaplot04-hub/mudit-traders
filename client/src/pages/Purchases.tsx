@@ -91,6 +91,19 @@ export default function Purchases() {
     onError: (err) => setError(getApiErrorMessage(err)),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return (await api.delete(`/purchases/${id}`)).data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchases"] });
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+    onError: (err) => alert(getApiErrorMessage(err)),
+  });
+
   function submit() {
     setError(null);
     if (!supplierId || lines.length === 0) {
@@ -160,6 +173,7 @@ export default function Purchases() {
                 const dateMatch = new Date(p.invoiceDate).toLocaleString("en-IN").includes(q);
                 return invoiceMatch || supplierMatch || dateMatch;
               })
+              .filter((p) => !p.cancelled)
               .map((p) => (
               <tr key={p._id} className="hover:bg-slate-50">
                 <td className="px-4 py-3 font-medium text-slate-800">{p.invoiceNumber || "-"}</td>
@@ -204,14 +218,26 @@ export default function Purchases() {
                       setShowForm(true);
                     }}
                     className="text-slate-400 hover:text-emerald-600 transition-colors p-1"
+                    title="Edit Purchase"
                   >
                     <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm("Are you sure you want to delete this purchase? This will revert stock and supplier balances.")) {
+                        deleteMutation.mutate(p._id);
+                      }
+                    }}
+                    className="text-slate-400 hover:text-red-600 transition-colors p-1 ml-2"
+                    title="Delete Purchase"
+                  >
+                    <Trash2 size={16} />
                   </button>
                 </td>
               </tr>
             ))}
-            {purchases && purchases.items.length === 0 && !isLoading && (
-              <tr><td colSpan={7} className="text-center py-10 text-slate-400">No purchases recorded yet</td></tr>
+            {purchases && purchases.items.filter((p) => !p.cancelled).length === 0 && !isLoading && (
+              <tr><td colSpan={8} className="text-center py-10 text-slate-400">No purchases recorded yet</td></tr>
             )}
           </tbody>
         </table>

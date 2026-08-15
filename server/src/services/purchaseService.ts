@@ -355,3 +355,79 @@ export async function updatePurchase(purchaseId: string, input: CreatePurchaseIn
     await session.endSession();
   }
 }
+
+export async function cancelPurchase(purchaseId: string, userId: mongoose.Types.ObjectId) {
+  const session = await mongoose.startSession();
+  try {
+    let cancelledPurchaseDoc: any;
+    
+    await session.withTransaction(async () => {
+      const oldPurchase = await Purchase.findById(purchaseId).session(session);
+      if (!oldPurchase) throw new PurchaseError("Purchase not found", 404);
+      if (oldPurchase.cancelled) throw new PurchaseError("Purchase is already cancelled", 400);
+
+      const oldSupplier = await Supplier.findById(oldPurchase.supplierId).session(session);
+      if (!oldSupplier) throw new PurchaseError("Supplier not found", 404);
+
+      // Reverse stock additions
+      for (const oldItem of oldPurchase.items) {
+        const product = await Product.findById(oldItem.productId).session(session);
+        if (product) {
+          const stockBefore = product.currentStock;
+          const stockAfter = stockBefore - oldItem.stockQuantity;
+          product.currentStock = stockAfter;
+          await product.save({ session });
+
+          await StockTransaction.create(
+            [
+              {
+                productId: product._id,
+                transactionType: "NEGATIVE_ADJUSTMENT",
+                quantity: oldItem.stockQuantity,
+                unit: product.stockUnit,
+                stockBeforeQty: stockBefore,
+                stockAfterQty: stockAfter,
+                referenceId: oldPurchase._id,
+                referenceType: "PurchaseCancel",
+                location: oldPurchase.location || "Godown",
+                userId,
+                notes: `Reversal for cancelling purchase ${oldPurchase.invoiceNumber}`,
+              },
+            ],
+            { session }
+          );
+        }
+      }
+
+      // Reverse supplier outstanding balance if credit
+      if (oldPurchase.paymentType === "CREDIT") {
+        oldSupplier.currentOutstandingPaise -= oldPurchase.totalAmountPaise;
+        await oldSupplier.save({ session });
+
+        await SupplierLedgerEntry.create(
+          [
+            {
+              supplierId: oldSupplier._id,
+              type: "PAYMENT_OUT", // Reversal of purchase
+              amountPaise: oldPurchase.totalAmountPaise,
+              referenceId: oldPurchase._id,
+              balanceAfterPaise: oldSupplier.currentOutstandingPaise,
+              userId,
+              notes: `Reversal for cancelling purchase ${oldPurchase.invoiceNumber}`,
+            },
+          ],
+          { session }
+        );
+      }
+
+      oldPurchase.cancelled = true;
+      await oldPurchase.save({ session });
+      cancelledPurchaseDoc = oldPurchase;
+    });
+
+    return cancelledPurchaseDoc;
+  } finally {
+    await session.endSession();
+  }
+}
+

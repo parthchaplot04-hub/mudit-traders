@@ -3,6 +3,7 @@ import { AuthedRequest } from "../middleware/auth";
 import { createPurchaseSchema } from "../validators/purchaseValidators";
 import * as purchaseService from "../services/purchaseService";
 import { Purchase } from "../models/Purchase";
+import mongoose from "mongoose";
 
 export async function createPurchase(req: AuthedRequest, res: Response) {
   const parsed = createPurchaseSchema.safeParse(req.body);
@@ -47,4 +48,18 @@ export async function getPurchase(req: AuthedRequest, res: Response) {
   const purchase = await Purchase.findById(req.params.id);
   if (!purchase) return res.status(404).json({ error: "Purchase not found" });
   return res.json({ purchase });
+}
+
+export async function cancelPurchase(req: AuthedRequest, res: Response) {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user!.userId);
+    const purchase = await purchaseService.cancelPurchase(req.params.id, userId);
+    return res.json({ message: "Purchase cancelled successfully", purchase });
+  } catch (error: any) {
+    if (error.name === "PurchaseError") {
+      return res.status(error.statusCode || 400).json({ error: error.message });
+    }
+    console.error("Cancel purchase error:", error);
+    return res.status(500).json({ error: "Failed to cancel purchase" });
+  }
 }
