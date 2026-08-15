@@ -23,6 +23,7 @@ export default function Purchases() {
     return now.toISOString().slice(0, 16);
   });
   const [paymentType, setPaymentType] = useState<"CASH" | "UPI" | "CHEQUE" | "CREDIT">("CREDIT");
+  const [location, setLocation] = useState<"Godown" | "In Shop" | "Out Shop">("Godown");
   const [lines, setLines] = useState<DraftLine[]>([]);
   const [productQuery, setProductQuery] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,6 +63,7 @@ export default function Purchases() {
         invoiceNumber,
         invoiceDate: new Date(invoiceDate).toISOString(),
         paymentType,
+        location,
         items: lines.map((l) => ({
           productId: l.product._id,
           purchaseQuantity: parseFloat(l.purchaseQuantity as string) || 0,
@@ -109,6 +111,7 @@ export default function Purchases() {
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             setInvoiceDate(now.toISOString().slice(0, 16));
             setPaymentType("CREDIT");
+            setLocation("Godown");
             setLines([]);
             setError(null);
             setShowForm(true);
@@ -135,6 +138,7 @@ export default function Purchases() {
             <tr>
               <th className="text-left px-4 py-3">Invoice</th>
               <th className="text-left px-4 py-3">Supplier</th>
+              <th className="text-left px-4 py-3">Location</th>
               <th className="text-left px-4 py-3">Date</th>
               <th className="text-left px-4 py-3">Items</th>
               <th className="text-left px-4 py-3">Payment</th>
@@ -159,6 +163,7 @@ export default function Purchases() {
                 <td className="px-4 py-3 text-slate-800 font-medium">
                   {suppliers?.items.find((s) => s._id === p.supplierId)?.supplierName || "Unknown"}
                 </td>
+                <td className="px-4 py-3 text-slate-600">{p.location || "Godown"}</td>
                 <td className="px-4 py-3 text-slate-600">
                   {new Date(p.invoiceDate).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
                 </td>
@@ -175,6 +180,7 @@ export default function Purchases() {
                       d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
                       setInvoiceDate(d.toISOString().slice(0, 16));
                       setPaymentType(p.paymentType as any);
+                      setLocation(p.location || "Godown");
                       setLines(
                         p.items.map((item: any) => ({
                           product: {
@@ -223,6 +229,11 @@ export default function Purchases() {
                 <option value="CASH">Cash</option>
                 <option value="UPI">UPI</option>
                 <option value="CHEQUE">Cheque</option>
+              </select>
+              <select value={location} onChange={(e) => setLocation(e.target.value as any)} className="input">
+                <option value="Godown">Godown</option>
+                <option value="In Shop">In Shop</option>
+                <option value="Out Shop">Out Shop</option>
               </select>
               <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="Invoice number (optional)" className="input" />
               <input type="datetime-local" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="input" />

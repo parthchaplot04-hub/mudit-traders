@@ -21,6 +21,7 @@ export interface IStockTransaction extends Document {
   stockAfterQty: number;
   referenceId?: Types.ObjectId; // Sale._id, Purchase._id, Wastage._id, etc.
   referenceType?: string;
+  location?: "Godown" | "In Shop" | "Out Shop";
   userId: Types.ObjectId;
   notes?: string;
   createdAt: Date;
@@ -41,6 +42,7 @@ const stockTransactionSchema = new Schema<IStockTransaction>(
     stockAfterQty: { type: Number, required: true },
     referenceId: { type: Schema.Types.ObjectId },
     referenceType: { type: String },
+    location: { type: String, enum: ["Godown", "In Shop", "Out Shop"] },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     notes: String,
   },

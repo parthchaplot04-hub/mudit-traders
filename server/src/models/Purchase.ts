@@ -59,6 +59,7 @@ export interface IPurchase extends Document {
   totalGstPaise: number;
   totalAmountPaise: number;
   paymentType: PaymentType;
+  location?: "Godown" | "In Shop" | "Out Shop";
   dueDate?: Date;
   notes?: string;
   cancelled: boolean;
@@ -77,6 +78,7 @@ const purchaseSchema = new Schema<IPurchase>(
     totalGstPaise: { type: Number, required: true },
     totalAmountPaise: { type: Number, required: true },
     paymentType: { type: String, enum: ["CASH", "UPI", "CHEQUE", "CREDIT"], required: true },
+    location: { type: String, enum: ["Godown", "In Shop", "Out Shop"], default: "Godown" },
     dueDate: Date,
     notes: String,
     cancelled: { type: Boolean, default: false },

@@ -26,6 +26,7 @@ interface CreatePurchaseInput {
   invoiceDate: string;
   items: CreatePurchaseItemInput[];
   paymentType: "CASH" | "UPI" | "CHEQUE" | "CREDIT";
+  location?: "Godown" | "In Shop" | "Out Shop";
   dueDate?: string;
   notes?: string;
 }
@@ -115,9 +116,10 @@ export async function createPurchase(input: CreatePurchaseInput, userId: string)
               quantity: stockQuantity,
               unit: product.stockUnit,
               stockBeforeQty: stockBefore,
-              stockAfterQty: stockAfter,
+              stockAfterQty: product.currentStock,
               referenceId: purchaseId,
               referenceType: "Purchase",
+              location: input.location || "Godown",
               userId,
             },
           ],
@@ -137,6 +139,7 @@ export async function createPurchase(input: CreatePurchaseInput, userId: string)
             totalGstPaise,
             totalAmountPaise,
             paymentType: input.paymentType,
+            location: input.location || "Godown",
             dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
             notes: input.notes,
             createdBy: userId,
@@ -298,6 +301,7 @@ export async function updatePurchase(purchaseId: string, input: CreatePurchaseIn
               stockAfterQty: stockAfter,
               referenceId: oldPurchase._id,
               referenceType: "PurchaseEdit",
+              location: input.location || "Godown",
               userId,
             },
           ],
@@ -314,6 +318,7 @@ export async function updatePurchase(purchaseId: string, input: CreatePurchaseIn
       oldPurchase.totalGstPaise = totalGstPaise;
       oldPurchase.totalAmountPaise = totalAmountPaise;
       oldPurchase.paymentType = input.paymentType;
+      oldPurchase.location = input.location || "Godown";
       oldPurchase.dueDate = input.dueDate ? new Date(input.dueDate) : undefined;
       oldPurchase.notes = input.notes;
       
