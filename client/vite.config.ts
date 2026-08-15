@@ -18,15 +18,10 @@ export default defineConfig({
       },
       // Only cache the app shell; never cache API responses as if they
       // were confirmed-saved data (spec section 41 - no false "saved"
-      // claims when offline).
       workbox: {
         navigateFallbackDenylist: [/^\/api\//],
       },
     }),
   ],
-  build: {
-    outDir: "../dist",
-    emptyOutDir: true,
-  },
   server: { port: 5173 },
 });
