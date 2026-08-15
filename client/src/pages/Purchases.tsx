@@ -27,6 +27,7 @@ export default function Purchases() {
   const [offloadedBy, setOffloadedBy] = useState<"Owner" | "Ramesh" | "Radhe shyam" | "others">("Owner");
   const [lines, setLines] = useState<DraftLine[]>([]);
   const [productQuery, setProductQuery] = useState("");
+  const [focusedProductIndex, setFocusedProductIndex] = useState(-1);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +50,7 @@ export default function Purchases() {
   function addLine(product: Product) {
     setLines((prev) => [...prev, { product, purchaseQuantity: 1, rateBeforeGstRupees: "" }]);
     setProductQuery("");
+    setFocusedProductIndex(-1);
     
     setTimeout(() => {
       const qtyInputs = document.querySelectorAll<HTMLInputElement>(".line-qty-input");
@@ -139,6 +141,7 @@ export default function Purchases() {
             setLines([]);
             setError(null);
             setShowForm(true);
+            setTimeout(() => document.getElementById("supplier-select")?.focus(), 50);
           }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700"
         >
@@ -224,6 +227,7 @@ export default function Purchases() {
                       );
                       setError(null);
                       setShowForm(true);
+                      setTimeout(() => document.getElementById("supplier-select")?.focus(), 50);
                     }}
                     className="text-slate-400 hover:text-emerald-600 transition-colors p-1"
                     title="Edit Purchase"
@@ -280,7 +284,7 @@ export default function Purchases() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-3">
-              <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className="input">
+              <select id="supplier-select" value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className="input">
                 <option value="">Select supplier...</option>
                 {suppliers?.items.map((s) => <option key={s._id} value={s._id}>{s.supplierName}</option>)}
               </select>
@@ -309,17 +313,40 @@ export default function Purchases() {
               <input
                 id="product-search-input"
                 value={productQuery}
-                onChange={(e) => setProductQuery(e.target.value)}
+                onChange={(e) => {
+                  setProductQuery(e.target.value);
+                  setFocusedProductIndex(-1);
+                }}
+                onKeyDown={(e) => {
+                  if (productResults && productResults.items.length > 0) {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setFocusedProductIndex((prev) => Math.min(prev + 1, productResults.items.length - 1));
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setFocusedProductIndex((prev) => Math.max(prev - 1, 0));
+                    } else if (e.key === "Enter") {
+                      if (focusedProductIndex >= 0 && focusedProductIndex < productResults.items.length) {
+                        e.preventDefault();
+                        addLine(productResults.items[focusedProductIndex]);
+                      } else {
+                        // If nothing is focused, maybe focus the first one?
+                        e.preventDefault();
+                        addLine(productResults.items[0]);
+                      }
+                    }
+                  }
+                }}
                 placeholder="Search product to add to this invoice..."
                 className="input w-full"
               />
               {productResults && productResults.items.length > 0 && (
                 <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
-                  {productResults.items.map((p) => (
+                  {productResults.items.map((p, idx) => (
                     <button
                       key={p._id}
                       onClick={() => addLine(p)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-emerald-50 border-b border-slate-100 last:border-0 text-sm"
+                      className={`w-full text-left px-4 py-2.5 border-b border-slate-100 last:border-0 text-sm ${focusedProductIndex === idx ? 'bg-emerald-100' : 'hover:bg-emerald-50'}`}
                     >
                       {p.productName} <span className="text-xs text-slate-400">({p.purchaseUnit} → {p.conversionFactor} {p.stockUnit})</span>
                     </button>
@@ -353,7 +380,7 @@ export default function Purchases() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
-                          document.getElementById("product-search-input")?.focus();
+                          document.getElementById("save-purchase-btn")?.focus();
                         }
                       }}
                       className="w-24 border border-slate-200 rounded-lg py-1 px-2 text-sm"
@@ -370,6 +397,7 @@ export default function Purchases() {
             {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">{error}</p>}
 
             <button
+              id="save-purchase-btn"
               onClick={submit}
               disabled={createMutation.isPending}
               className="w-full py-3 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-60"
