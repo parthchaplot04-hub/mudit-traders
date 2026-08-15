@@ -17,7 +17,11 @@ export default function Purchases() {
   const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
   const [supplierId, setSupplierId] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
-  const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [invoiceDate, setInvoiceDate] = useState(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  });
   const [paymentType, setPaymentType] = useState<"CASH" | "UPI" | "CHEQUE" | "CREDIT">("CREDIT");
   const [lines, setLines] = useState<DraftLine[]>([]);
   const [productQuery, setProductQuery] = useState("");
@@ -56,7 +60,7 @@ export default function Purchases() {
       const payload = {
         supplierId,
         invoiceNumber,
-        invoiceDate,
+        invoiceDate: new Date(invoiceDate).toISOString(),
         paymentType,
         items: lines.map((l) => ({
           productId: l.product._id,
@@ -101,7 +105,9 @@ export default function Purchases() {
             setEditingPurchaseId(null);
             setSupplierId("");
             setInvoiceNumber("");
-            setInvoiceDate(new Date().toISOString().slice(0, 10));
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            setInvoiceDate(now.toISOString().slice(0, 16));
             setPaymentType("CREDIT");
             setLines([]);
             setError(null);
@@ -144,7 +150,7 @@ export default function Purchases() {
                 const q = searchQuery.toLowerCase();
                 const invoiceMatch = p.invoiceNumber.toLowerCase().includes(q);
                 const supplierMatch = (suppliers?.items.find((s) => s._id === p.supplierId)?.supplierName || "Unknown").toLowerCase().includes(q);
-                const dateMatch = new Date(p.invoiceDate).toLocaleDateString("en-IN").includes(q);
+                const dateMatch = new Date(p.invoiceDate).toLocaleString("en-IN").includes(q);
                 return invoiceMatch || supplierMatch || dateMatch;
               })
               .map((p) => (
@@ -153,7 +159,9 @@ export default function Purchases() {
                 <td className="px-4 py-3 text-slate-800 font-medium">
                   {suppliers?.items.find((s) => s._id === p.supplierId)?.supplierName || "Unknown"}
                 </td>
-                <td className="px-4 py-3 text-slate-600">{new Date(p.invoiceDate).toLocaleDateString("en-IN")}</td>
+                <td className="px-4 py-3 text-slate-600">
+                  {new Date(p.invoiceDate).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
+                </td>
                 <td className="px-4 py-3 text-slate-600">{p.items.length} product(s)</td>
                 <td className="px-4 py-3 text-slate-600">{p.paymentType}</td>
                 <td className="px-4 py-3 text-right font-semibold text-slate-800">{formatPaise(p.totalAmountPaise)}</td>
@@ -163,7 +171,9 @@ export default function Purchases() {
                       setEditingPurchaseId(p._id);
                       setSupplierId(p.supplierId);
                       setInvoiceNumber(p.invoiceNumber);
-                      setInvoiceDate(new Date(p.invoiceDate).toISOString().slice(0, 10));
+                      const d = new Date(p.invoiceDate);
+                      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                      setInvoiceDate(d.toISOString().slice(0, 16));
                       setPaymentType(p.paymentType as any);
                       setLines(
                         p.items.map((item: any) => ({
@@ -215,7 +225,7 @@ export default function Purchases() {
                 <option value="CHEQUE">Cheque</option>
               </select>
               <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="Invoice number (optional)" className="input" />
-              <input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="input" />
+              <input type="datetime-local" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="input" />
             </div>
 
             <div className="relative mb-3">
