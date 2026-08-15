@@ -24,6 +24,7 @@ export default function Purchases() {
   });
   const [paymentType, setPaymentType] = useState<"CASH" | "UPI" | "CHEQUE" | "CREDIT">("CREDIT");
   const [location, setLocation] = useState<"Godown" | "In Shop" | "Out Shop">("Godown");
+  const [offloadedBy, setOffloadedBy] = useState<"Owner" | "Ramesh" | "Radhe shyam" | "others">("Owner");
   const [lines, setLines] = useState<DraftLine[]>([]);
   const [productQuery, setProductQuery] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,6 +65,7 @@ export default function Purchases() {
         invoiceDate: new Date(invoiceDate).toISOString(),
         paymentType,
         location,
+        offloadedBy,
         items: lines.map((l) => ({
           productId: l.product._id,
           purchaseQuantity: parseFloat(l.purchaseQuantity as string) || 0,
@@ -112,6 +114,7 @@ export default function Purchases() {
             setInvoiceDate(now.toISOString().slice(0, 16));
             setPaymentType("CREDIT");
             setLocation("Godown");
+            setOffloadedBy("Owner");
             setLines([]);
             setError(null);
             setShowForm(true);
@@ -163,7 +166,9 @@ export default function Purchases() {
                 <td className="px-4 py-3 text-slate-800 font-medium">
                   {suppliers?.items.find((s) => s._id === p.supplierId)?.supplierName || "Unknown"}
                 </td>
-                <td className="px-4 py-3 text-slate-600">{p.location || "Godown"}</td>
+                <td className="px-4 py-3 text-slate-600">
+                  {p.location || "Godown"} <span className="text-xs text-slate-400">({p.offloadedBy || "Owner"})</span>
+                </td>
                 <td className="px-4 py-3 text-slate-600">
                   {new Date(p.invoiceDate).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
                 </td>
@@ -181,6 +186,7 @@ export default function Purchases() {
                       setInvoiceDate(d.toISOString().slice(0, 16));
                       setPaymentType(p.paymentType as any);
                       setLocation(p.location || "Godown");
+                      setOffloadedBy(p.offloadedBy || "Owner");
                       setLines(
                         p.items.map((item: any) => ({
                           product: {
@@ -234,6 +240,12 @@ export default function Purchases() {
                 <option value="Godown">Godown</option>
                 <option value="In Shop">In Shop</option>
                 <option value="Out Shop">Out Shop</option>
+              </select>
+              <select value={offloadedBy} onChange={(e) => setOffloadedBy(e.target.value as any)} className="input">
+                <option value="Owner">Owner</option>
+                <option value="Ramesh">Ramesh</option>
+                <option value="Radhe shyam">Radhe shyam</option>
+                <option value="others">Others</option>
               </select>
               <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="Invoice number (optional)" className="input" />
               <input type="datetime-local" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="input" />

@@ -60,6 +60,7 @@ export interface IPurchase extends Document {
   totalAmountPaise: number;
   paymentType: PaymentType;
   location?: "Godown" | "In Shop" | "Out Shop";
+  offloadedBy?: "Owner" | "Ramesh" | "Radhe shyam" | "others";
   dueDate?: Date;
   notes?: string;
   cancelled: boolean;
@@ -79,6 +80,7 @@ const purchaseSchema = new Schema<IPurchase>(
     totalAmountPaise: { type: Number, required: true },
     paymentType: { type: String, enum: ["CASH", "UPI", "CHEQUE", "CREDIT"], required: true },
     location: { type: String, enum: ["Godown", "In Shop", "Out Shop"], default: "Godown" },
+    offloadedBy: { type: String, enum: ["Owner", "Ramesh", "Radhe shyam", "others"], default: "Owner" },
     dueDate: Date,
     notes: String,
     cancelled: { type: Boolean, default: false },

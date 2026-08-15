@@ -13,6 +13,7 @@ export const createPurchaseSchema = z.object({
   items: z.array(purchaseItemInputSchema).min(1),
   paymentType: z.enum(["CASH", "UPI", "CHEQUE", "CREDIT"]),
   location: z.enum(["Godown", "In Shop", "Out Shop"]).optional(),
+  offloadedBy: z.enum(["Owner", "Ramesh", "Radhe shyam", "others"]).optional(),
   dueDate: z.string().optional(),
   notes: z.string().optional(),
 });

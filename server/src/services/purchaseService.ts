@@ -27,6 +27,7 @@ interface CreatePurchaseInput {
   items: CreatePurchaseItemInput[];
   paymentType: "CASH" | "UPI" | "CHEQUE" | "CREDIT";
   location?: "Godown" | "In Shop" | "Out Shop";
+  offloadedBy?: "Owner" | "Ramesh" | "Radhe shyam" | "others";
   dueDate?: string;
   notes?: string;
 }
@@ -140,6 +141,7 @@ export async function createPurchase(input: CreatePurchaseInput, userId: string)
             totalAmountPaise,
             paymentType: input.paymentType,
             location: input.location || "Godown",
+            offloadedBy: input.offloadedBy || "Owner",
             dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
             notes: input.notes,
             createdBy: userId,
@@ -319,6 +321,7 @@ export async function updatePurchase(purchaseId: string, input: CreatePurchaseIn
       oldPurchase.totalAmountPaise = totalAmountPaise;
       oldPurchase.paymentType = input.paymentType;
       oldPurchase.location = input.location || "Godown";
+      oldPurchase.offloadedBy = input.offloadedBy || "Owner";
       oldPurchase.dueDate = input.dueDate ? new Date(input.dueDate) : undefined;
       oldPurchase.notes = input.notes;
       
