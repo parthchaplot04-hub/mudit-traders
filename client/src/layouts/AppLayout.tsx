@@ -31,9 +31,12 @@ export default function AppLayout() {
     <div className="min-h-screen bg-slate-50 flex">
       {/* Desktop sidebar */}
       <aside className="print-hidden hidden md:flex md:flex-col w-60 bg-slate-900 text-slate-100 shrink-0">
-        <div className="px-5 py-5 border-b border-slate-800">
-          <h1 className="text-lg font-bold leading-tight">Mudit Traders</h1>
-          <p className="text-xs text-slate-400 mt-0.5">{user?.name} · {user?.role}</p>
+        <div className="px-5 py-5 border-b border-slate-800 flex items-center gap-3">
+          <img src="/logo.jpg" alt="Mudit Traders Logo" className="w-10 h-10 rounded-full border border-slate-700" />
+          <div>
+            <h1 className="text-lg font-bold leading-tight">Mudit Traders</h1>
+            <p className="text-xs text-slate-400 mt-0.5">{user?.name} · {user?.role}</p>
+          </div>
         </div>
         <nav className="flex-1 px-2 py-4 space-y-1">
           {navItems.map((item) => (
@@ -62,7 +65,10 @@ export default function AppLayout() {
 
       {/* Mobile top bar */}
       <div className="print-hidden md:hidden fixed top-0 left-0 right-0 z-40 bg-slate-900 text-white flex items-center justify-between px-4 py-3">
-        <h1 className="text-base font-bold">Mudit Traders</h1>
+        <div className="flex items-center gap-2">
+          <img src="/logo.jpg" alt="Mudit Traders Logo" className="w-8 h-8 rounded-full border border-slate-700" />
+          <h1 className="text-base font-bold">Mudit Traders</h1>
+        </div>
         <button onClick={() => setMobileOpen((o) => !o)} aria-label="Menu">
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>

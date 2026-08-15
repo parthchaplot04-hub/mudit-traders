@@ -15,15 +15,18 @@ export function Invoice({ sale, customerName }: { sale: any; customerName?: stri
     <div className="print-only bg-white text-black p-8 font-sans max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight uppercase text-slate-900">
-            Mudit Traders
-          </h1>
+        <div className="flex items-center gap-4">
+          <img src="/logo.jpg" alt="Mudit Traders Logo" className="w-16 h-16 rounded-full border border-slate-700" />
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight uppercase text-slate-900">
+              Mudit Traders
+            </h1>
           <p className="text-sm text-slate-600 mt-1">
             Fatehnagar Akola Road, Akola<br />
             Dist Chittorgarh, Rajasthan<br />
             Phone: +91 99999 99999
           </p>
+          </div>
         </div>
         <div className="text-right">
           <h2 className="text-2xl font-semibold text-slate-800 uppercase tracking-widest">
