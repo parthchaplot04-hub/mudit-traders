@@ -1,6 +1,6 @@
 {
   "framework": null,
-  "buildCommand": "npm run build:client",
+  "buildCommand": "npm run build",
   "outputDirectory": "client/dist",
   "rewrites": [
     {
