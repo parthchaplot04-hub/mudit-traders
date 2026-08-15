@@ -49,6 +49,14 @@ export default function Purchases() {
   function addLine(product: Product) {
     setLines((prev) => [...prev, { product, purchaseQuantity: 1, rateBeforeGstRupees: "" }]);
     setProductQuery("");
+    
+    setTimeout(() => {
+      const qtyInputs = document.querySelectorAll<HTMLInputElement>(".line-qty-input");
+      if (qtyInputs.length > 0) {
+        qtyInputs[qtyInputs.length - 1].focus();
+        qtyInputs[qtyInputs.length - 1].select();
+      }
+    }, 50);
   }
   function removeLine(idx: number) {
     setLines((prev) => prev.filter((_, i) => i !== idx));
@@ -245,7 +253,27 @@ export default function Purchases() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+          <div 
+            className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6"
+            onKeyDown={(e) => {
+              if (e.defaultPrevented) return;
+              if (e.key === "Enter") {
+                const target = e.target as HTMLElement;
+                if (target.tagName === "BUTTON") return; // Let buttons click naturally
+                
+                e.preventDefault();
+                const form = e.currentTarget;
+                const focusable = Array.from(
+                  form.querySelectorAll<HTMLElement>("input, select, button:not([disabled])")
+                ).filter(el => el.tabIndex !== -1);
+                
+                const index = focusable.indexOf(target);
+                if (index > -1 && index < focusable.length - 1) {
+                  focusable[index + 1].focus();
+                }
+              }
+            }}
+          >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-slate-900">{editingPurchaseId ? "Edit Purchase" : "New Purchase"}</h2>
               <button onClick={() => setShowForm(false)}><X size={20} /></button>
@@ -279,6 +307,7 @@ export default function Purchases() {
 
             <div className="relative mb-3">
               <input
+                id="product-search-input"
                 value={productQuery}
                 onChange={(e) => setProductQuery(e.target.value)}
                 placeholder="Search product to add to this invoice..."
@@ -313,7 +342,7 @@ export default function Purchases() {
                     <input
                       type="number" step="0.001" value={line.purchaseQuantity}
                       onChange={(e) => updateLine(idx, { purchaseQuantity: e.target.value })}
-                      className="w-20 border border-slate-200 rounded-lg py-1 px-2 text-sm"
+                      className="line-qty-input w-20 border border-slate-200 rounded-lg py-1 px-2 text-sm"
                     />
                   </div>
                   <div>
@@ -321,10 +350,16 @@ export default function Purchases() {
                     <input
                       type="number" step="0.01" value={line.rateBeforeGstRupees}
                       onChange={(e) => updateLine(idx, { rateBeforeGstRupees: e.target.value })}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          document.getElementById("product-search-input")?.focus();
+                        }
+                      }}
                       className="w-24 border border-slate-200 rounded-lg py-1 px-2 text-sm"
                     />
                   </div>
-                  <button onClick={() => removeLine(idx)} className="text-slate-400 hover:text-red-500">
+                  <button onClick={() => removeLine(idx)} className="text-slate-400 hover:text-red-500" tabIndex={-1}>
                     <Trash2 size={16} />
                   </button>
                 </div>
