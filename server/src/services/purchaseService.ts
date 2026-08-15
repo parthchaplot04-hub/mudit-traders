@@ -229,7 +229,7 @@ export async function updatePurchase(purchaseId: string, input: CreatePurchaseIn
           [
             {
               supplierId: oldSupplier._id,
-              type: "PAYMENT_OUT",
+              type: "ADJUSTMENT",
               amountPaise: oldPurchase.totalAmountPaise,
               referenceId: oldPurchase._id,
               balanceAfterPaise: oldSupplier.currentOutstandingPaise,
@@ -408,7 +408,7 @@ export async function cancelPurchase(purchaseId: string, userId: mongoose.Types.
           [
             {
               supplierId: oldSupplier._id,
-              type: "PAYMENT_OUT", // Reversal of purchase
+              type: "ADJUSTMENT", // Reversal of purchase
               amountPaise: oldPurchase.totalAmountPaise,
               referenceId: oldPurchase._id,
               balanceAfterPaise: oldSupplier.currentOutstandingPaise,
