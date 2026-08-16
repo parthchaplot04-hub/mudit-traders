@@ -50,6 +50,7 @@ export function createApp() {
   app.use("/api/customers", customerRoutes);
   app.use("/api/stocktake", stocktakeRoutes);
   app.use("/api/csv", csvRoutes);
+  app.use("/api/reports", require("./routes/reportRoutes").default);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ShoppingCart, Package, Truck, Building2,
-  RefreshCcw, Trash2, ClipboardList, LogOut, Menu, X,
+  RefreshCcw, Trash2, ClipboardList, LogOut, Menu, X, FileText
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
@@ -15,6 +15,7 @@ const navItems = [
   { to: "/reorder", label: "Reorder", icon: RefreshCcw },
   { to: "/wastage", label: "Wastage", icon: Trash2 },
   { to: "/stocktake", label: "Stocktake", icon: ClipboardList },
+  { to: "/reports", label: "Reports", icon: FileText },
 ];
 
 export default function AppLayout() {

@@ -7,6 +7,14 @@ import Suppliers from "./pages/Suppliers";
 import Reorder from "./pages/Reorder";
 import Wastage from "./pages/Wastage";
 import Stocktake from "./pages/Stocktake";
+import ReportsLayout from "./pages/Reports/ReportsLayout";
+import ReportsOverview from "./pages/Reports/ReportsOverview";
+import ReportsSales from "./pages/Reports/ReportsSales";
+import ReportsPurchases from "./pages/Reports/ReportsPurchases";
+import ReportsStock from "./pages/Reports/ReportsStock";
+import ReportsProfit from "./pages/Reports/ReportsProfit";
+import ReportsUnifiedTimeline from "./pages/Reports/ReportsUnifiedTimeline";
+import ReportsAudit from "./pages/Reports/ReportsAudit";
 import AppLayout from "./layouts/AppLayout";
 
 export default function App() {
@@ -24,6 +32,17 @@ export default function App() {
         <Route path="reorder" element={<Reorder />} />
         <Route path="wastage" element={<Wastage />} />
         <Route path="stocktake" element={<Stocktake />} />
+        
+        {/* Reports Module */}
+        <Route path="reports" element={<ReportsLayout />}>
+          <Route index element={<ReportsOverview />} />
+          <Route path="sales" element={<ReportsSales />} />
+          <Route path="purchases" element={<ReportsPurchases />} />
+          <Route path="stock" element={<ReportsStock />} />
+          <Route path="profit" element={<ReportsProfit />} />
+          <Route path="transactions" element={<ReportsUnifiedTimeline />} />
+          <Route path="audit" element={<ReportsAudit />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<div className="p-8 text-slate-500">Page not found.</div>} />
