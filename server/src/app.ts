@@ -51,6 +51,7 @@ export function createApp() {
   app.use("/api/stocktake", stocktakeRoutes);
   app.use("/api/csv", csvRoutes);
   app.use("/api/reports", require("./routes/reportRoutes").default);
+  app.use("/api/orders", require("./routes/orderRoutes").default);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

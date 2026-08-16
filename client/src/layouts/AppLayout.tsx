@@ -10,6 +10,7 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/pos", label: "Sales (POS)", icon: ShoppingCart },
   { to: "/products", label: "Products", icon: Package },
+  { to: "/orders", label: "Orders (Large)", icon: ClipboardList },
   { to: "/purchases", label: "Purchases", icon: Truck },
   { to: "/suppliers", label: "Suppliers", icon: Building2 },
   { to: "/reorder", label: "Reorder", icon: RefreshCcw },

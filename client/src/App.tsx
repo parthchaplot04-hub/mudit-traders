@@ -16,6 +16,10 @@ import ReportsProfit from "./pages/Reports/ReportsProfit";
 import ReportsUnifiedTimeline from "./pages/Reports/ReportsUnifiedTimeline";
 import ReportsAudit from "./pages/Reports/ReportsAudit";
 import AppLayout from "./layouts/AppLayout";
+import OrdersList from "./pages/Orders/OrdersList";
+import CreateOrder from "./pages/Orders/CreateOrder";
+import OrderPicking from "./pages/Orders/OrderPicking";
+import OrderCheckout from "./pages/Orders/OrderCheckout";
 
 export default function App() {
   return (
@@ -32,6 +36,12 @@ export default function App() {
         <Route path="reorder" element={<Reorder />} />
         <Route path="wastage" element={<Wastage />} />
         <Route path="stocktake" element={<Stocktake />} />
+        
+        {/* Orders Module */}
+        <Route path="orders" element={<OrdersList />} />
+        <Route path="orders/create" element={<CreateOrder />} />
+        <Route path="orders/:id/pick" element={<OrderPicking />} />
+        <Route path="orders/:id/checkout" element={<OrderCheckout />} />
         
         {/* Reports Module */}
         <Route path="reports" element={<ReportsLayout />}>
