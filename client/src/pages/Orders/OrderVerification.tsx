@@ -276,13 +276,13 @@ export default function OrderVerification() {
                 <div className="flex bg-slate-100 p-1 rounded-lg mb-4">
                   <button 
                     onClick={() => setDiscountType("AMOUNT")} 
-                    className={`flex-1 py-1 text-sm font-bold rounded-md ${discountType === "AMOUNT" ? "bg-white shadow-sm text-slate-800" : "text-slate-500"}`}
+                    className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${discountType === "AMOUNT" ? "bg-white shadow-sm text-slate-800 border border-slate-200" : "text-slate-500 hover:text-slate-700"}`}
                   >
                     Discount (₹)
                   </button>
                   <button 
                     onClick={() => setDiscountType("PERCENT")} 
-                    className={`flex-1 py-1 text-sm font-bold rounded-md ${discountType === "PERCENT" ? "bg-white shadow-sm text-slate-800" : "text-slate-500"}`}
+                    className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${discountType === "PERCENT" ? "bg-white shadow-sm text-slate-800 border border-slate-200" : "text-slate-500 hover:text-slate-700"}`}
                   >
                     Discount (%)
                   </button>
@@ -291,22 +291,22 @@ export default function OrderVerification() {
                 <input 
                   type="number" 
                   placeholder={discountType === "AMOUNT" ? "Enter ₹ amount" : "Enter %"}
-                  className="w-full border border-slate-300 rounded-lg px-4 py-2 mb-4 focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full border border-slate-300 rounded-lg px-4 py-3 mb-4 focus:ring-2 focus:ring-orange-500 outline-none transition-shadow text-lg font-medium"
                   value={discountValue || ''}
                   onChange={(e) => setDiscountValue(Math.max(0, parseFloat(e.target.value || '0')))}
                 />
 
-                <div className="flex justify-between items-center text-xl font-bold text-slate-900 mb-4 bg-slate-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center text-xl font-bold text-slate-900 mb-4 bg-orange-50 border border-orange-100 p-4 rounded-lg">
                   <span>Total:</span>
-                  <span className="text-emerald-700">₹{(finalTotal / 100).toFixed(2)}</span>
+                  <span className="text-orange-700">₹{(finalTotal / 100).toFixed(2)}</span>
                 </div>
 
                 <button
                   onClick={handleBill}
                   disabled={submitting}
-                  className="w-full py-4 bg-orange-500 text-white font-bold rounded-xl shadow-lg hover:bg-orange-600 transition flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-orange-500 text-white font-bold rounded-xl shadow-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 text-lg"
                 >
-                  <Receipt size={20} /> Create Bill
+                  <Receipt size={24} /> Generate Invoice
                 </button>
                 <p className="text-xs text-center text-slate-400 mt-2">Deducts inventory & generates Invoice ID.</p>
               </div>
@@ -353,7 +353,7 @@ export default function OrderVerification() {
                           <button
                             key={method}
                             onClick={() => setCurrentPaymentMode(method)}
-                            className={`py-2 text-xs font-bold rounded border-2 ${currentPaymentMode === method ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-white border-slate-200 text-slate-600'}`}
+                            className={`py-2 px-1 text-[11px] sm:text-xs font-bold rounded-lg border-2 transition-all ${currentPaymentMode === method ? 'bg-emerald-100 border-emerald-500 text-emerald-800 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:border-emerald-300 hover:bg-slate-50'}`}
                           >
                             {method}
                           </button>
@@ -368,7 +368,7 @@ export default function OrderVerification() {
                           }
                         }}
                         disabled={!currentPaymentAmount}
-                        className="w-full py-2 bg-slate-800 text-white font-bold rounded shadow-sm hover:bg-slate-900 disabled:opacity-50 transition text-sm"
+                        className="w-full py-3 bg-slate-800 text-white font-bold rounded-lg shadow-sm hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm flex items-center justify-center gap-2"
                       >
                         + Add Payment
                       </button>
@@ -377,9 +377,9 @@ export default function OrderVerification() {
                     <button
                       onClick={() => handlePaymentWithAmount(payments)}
                       disabled={submitting || payments.length === 0}
-                      className="w-full py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-sm hover:bg-emerald-700 disabled:opacity-50 transition"
+                      className="w-full py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 text-lg"
                     >
-                      Record Payments & Continue
+                      <CheckCircle2 size={24} /> Record Payments
                     </button>
                   </div>
                 ) : (

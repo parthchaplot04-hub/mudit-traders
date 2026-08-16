@@ -33,36 +33,38 @@ export default function OrderProgressBar({ currentStatus }: { currentStatus: Wor
     );
   }
 
-  // Find the index of the current stage
   let currentIndex = STAGES.findIndex((s) => s.matches.includes(currentStatus));
-  if (currentIndex === -1) currentIndex = 0; // Default to Created if mapping is weird
+  if (currentIndex === -1) currentIndex = 0; 
   if (currentStatus === "COMPLETED") currentIndex = STAGES.length - 1;
 
   return (
-    <div className="w-full py-6 print-hidden">
-      <div className="flex items-start justify-between w-full">
+    <div className="w-full py-8 print-hidden relative overflow-hidden">
+      <div className="flex items-center justify-between w-full relative">
+        
+        {/* Background Track Line */}
+        <div className="absolute top-4 left-0 right-0 h-1 bg-slate-200 z-0"></div>
+
         {STAGES.map((stage, idx) => {
           const isCompleted = idx < currentIndex || currentStatus === "COMPLETED";
           const isCurrent = idx === currentIndex && currentStatus !== "COMPLETED";
 
           return (
-            <div key={stage.key} className="flex items-center flex-1 last:flex-none relative">
+            <div key={stage.key} className="flex-1 relative flex flex-col items-center group">
               
-              <div className="relative flex flex-col items-center group w-full">
-                <div
-                  className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-[10px] md:text-sm font-bold z-10 shrink-0
-                    ${isCompleted ? "bg-emerald-600 text-white" : isCurrent ? "bg-blue-600 text-white ring-4 ring-blue-100" : "bg-slate-200 text-slate-400"}`}
-                >
-                  {isCompleted ? <Check size={14} /> : idx + 1}
-                </div>
-                <div className={`absolute top-8 md:top-10 text-[10px] md:text-xs font-semibold text-center w-16 md:w-20 leading-tight ${isCurrent ? 'text-blue-700' : isCompleted ? 'text-slate-700' : 'text-slate-400'}`}>
-                  {stage.label}
-                </div>
-              </div>
-
-              {idx < STAGES.length - 1 && (
-                <div className={`absolute top-3 md:top-4 left-1/2 w-full h-1 -z-10 ${isCompleted ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+              {/* Active/Completed Line Fill */}
+              {idx < STAGES.length - 1 && isCompleted && (
+                <div className="absolute top-4 left-1/2 right-[-50%] h-1 bg-emerald-500 z-0"></div>
               )}
+
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold z-10 shrink-0 border-4 border-white
+                  ${isCompleted ? "bg-emerald-600 text-white" : isCurrent ? "bg-blue-600 text-white ring-2 ring-blue-500" : "bg-slate-200 text-slate-500"}`}
+              >
+                {isCompleted ? <Check size={16} /> : idx + 1}
+              </div>
+              <div className={`mt-3 text-[10px] md:text-sm font-semibold text-center leading-tight ${isCurrent ? 'text-blue-700' : isCompleted ? 'text-slate-800' : 'text-slate-400'}`}>
+                {stage.label}
+              </div>
             </div>
           );
         })}
