@@ -98,16 +98,49 @@ export default function ReportsLayout() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 p-6 overflow-auto print:p-0 print:overflow-visible">
-        {/* Print Only Header */}
-        <div className="hidden print:block mb-8 text-center">
-          <h1 className="text-3xl font-bold uppercase tracking-wider text-slate-800">Mudit Traders</h1>
-          <p className="text-slate-500">Business Report - {rangeType.replace("_", " ").toUpperCase()}</p>
+      <div className="flex-1 p-6 overflow-auto print:p-0 print:overflow-visible bg-slate-50 print:bg-white">
+        
+        {/* Professional Print Header */}
+        <div className="hidden print:flex flex-col mb-8 border-b-2 border-slate-800 pb-4">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-4">
+              <img src="/logo.jpg" alt="Mudit Traders Logo" className="w-16 h-16 rounded-full grayscale" />
+              <div>
+                <h1 className="text-3xl font-bold uppercase tracking-widest text-slate-900">MUDIT TRADERS</h1>
+                <p className="text-slate-600 font-medium">Kirana Store & Wholesale</p>
+                <p className="text-slate-500 text-sm mt-1">123 Market Street, Indore, MP 452001</p>
+                <p className="text-slate-500 text-sm">Phone: +91 98765 43210</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <h2 className="text-xl font-bold text-slate-800 uppercase">BUSINESS REPORT</h2>
+              <div className="mt-2 text-slate-600 bg-slate-100 px-3 py-1 rounded inline-block font-medium">
+                Period: {rangeType === 'custom' ? `${customStart} to ${customEnd}` : rangeType.replace("_", " ").toUpperCase()}
+              </div>
+              <p className="text-xs text-slate-500 mt-2">Generated on: {format(new Date(), "dd MMM yyyy, hh:mm a")}</p>
+            </div>
+          </div>
         </div>
 
         {/* The child routes will need access to the selected date range. 
             We can pass it via context or just use React Router Outlet context. */}
-        <Outlet context={{ rangeType, customStart, customEnd }} />
+        <div className="print:text-sm">
+          <Outlet context={{ rangeType, customStart, customEnd }} />
+        </div>
+
+        {/* Professional Print Footer */}
+        <div className="hidden print:flex justify-between items-end mt-16 pt-8 border-t border-slate-300 page-break-inside-avoid">
+          <div className="text-xs text-slate-400">
+            * This is a computer generated report and does not require a physical signature.
+            <br />
+            * Page 1 of 1
+          </div>
+          <div className="text-center mr-8">
+            <div className="w-40 border-b border-slate-800 mb-2"></div>
+            <p className="text-sm font-semibold text-slate-800">Authorized Signatory</p>
+            <p className="text-xs text-slate-500">For MUDIT TRADERS</p>
+          </div>
+        </div>
       </div>
     </div>
   );

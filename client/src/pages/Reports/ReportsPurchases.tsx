@@ -96,7 +96,7 @@ export default function ReportsPurchases() {
                 <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-400">No purchases found for this period.</td></tr>
               ) : (
                 purchases.map((p) => (
-                  <tr key={p._id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <tr key={p._id} className="border-b border-slate-100 hover:bg-slate-50 print:break-inside-avoid">
                     <td className="px-4 py-3 whitespace-nowrap">{format(new Date(p.createdAt), "dd MMM yyyy")}</td>
                     <td className="px-4 py-3 font-medium">{p.invoiceNumber || "-"}</td>
                     <td className="px-4 py-3">{p.supplierId?.supplierName || "-"}</td>
@@ -131,14 +131,14 @@ export default function ReportsPurchases() {
               <button 
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="p-1 rounded border border-slate-200 disabled:opacity-50 hover:bg-slate-50"
+                className="p-1 rounded border border-slate-200 disabled:opacity-50 hover:bg-slate-50 print:break-inside-avoid"
               >
                 <ChevronLeft size={16} />
               </button>
               <button 
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="p-1 rounded border border-slate-200 disabled:opacity-50 hover:bg-slate-50"
+                className="p-1 rounded border border-slate-200 disabled:opacity-50 hover:bg-slate-50 print:break-inside-avoid"
               >
                 <ChevronRight size={16} />
               </button>

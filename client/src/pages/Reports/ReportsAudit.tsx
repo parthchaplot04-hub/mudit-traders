@@ -97,7 +97,7 @@ export default function ReportsAudit() {
               </tr>
             ) : (
               data?.items.map((item) => (
-                <tr key={item._id} className="border-b border-slate-100 hover:bg-slate-50">
+                <tr key={item._id} className="border-b border-slate-100 hover:bg-slate-50 print:break-inside-avoid">
                   <td className="px-6 py-3 whitespace-nowrap text-slate-600">
                     {format(new Date(item.createdAt), "dd MMM yyyy, HH:mm:ss")}
                   </td>
@@ -139,14 +139,14 @@ export default function ReportsAudit() {
             <button
               disabled={page === 1}
               onClick={() => setPage(p => p - 1)}
-              className="px-3 py-1 border border-slate-300 rounded-md disabled:opacity-50 hover:bg-slate-50"
+              className="px-3 py-1 border border-slate-300 rounded-md disabled:opacity-50 hover:bg-slate-50 print:break-inside-avoid"
             >
               Previous
             </button>
             <button
               disabled={page === data.pages}
               onClick={() => setPage(p => p + 1)}
-              className="px-3 py-1 border border-slate-300 rounded-md disabled:opacity-50 hover:bg-slate-50"
+              className="px-3 py-1 border border-slate-300 rounded-md disabled:opacity-50 hover:bg-slate-50 print:break-inside-avoid"
             >
               Next
             </button>

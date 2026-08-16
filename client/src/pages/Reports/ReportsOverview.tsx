@@ -15,6 +15,8 @@ type ReportContext = {
 
 // Colors for charts
 const COLORS = ['#0f172a', '#334155', '#64748b', '#94a3b8'];
+// Print Colors (high contrast grayscale)
+const PRINT_COLORS = ['#000000', '#444444', '#888888', '#CCCCCC'];
 
 function formatINR(amount: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount / 100);
@@ -111,7 +113,7 @@ export default function ReportsOverview() {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />
                 <YAxis tickFormatter={(val) => `₹${val}`} axisLine={false} tickLine={false} />
                 <RechartsTooltip formatter={(val: any) => `₹${Number(val).toLocaleString('en-IN')}`} />
-                <Bar dataKey="amount" fill="#0f172a" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                <Bar dataKey="amount" fill="#0f172a" radius={[4, 4, 0, 0]} maxBarSize={60} className="print:fill-slate-800" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -134,7 +136,11 @@ export default function ReportsOverview() {
                     dataKey="value"
                   >
                     {paymentData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} className="print:hidden" />
+                    ))}
+                    {/* Add high-contrast cells for print */}
+                    {paymentData.map((entry, index) => (
+                      <Cell key={`cell-print-${index}`} fill={PRINT_COLORS[index % PRINT_COLORS.length]} className="hidden print:block" />
                     ))}
                   </Pie>
                   <RechartsTooltip formatter={(val: any) => `₹${(Number(val)/100).toLocaleString('en-IN')}`} />
@@ -153,10 +159,10 @@ export default function ReportsOverview() {
 
 function SummaryCard({ title, value, desc }: { title: string, value: string, desc: string }) {
   return (
-    <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm hover:shadow transition-shadow print:border-slate-300">
-      <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">{title}</h3>
-      <div className="mt-2 text-2xl font-bold text-slate-800">{value}</div>
-      <p className="mt-1 text-xs text-slate-400">{desc}</p>
+    <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm hover:shadow transition-shadow print:shadow-none print:border-slate-800">
+      <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wider print:text-slate-800">{title}</h3>
+      <div className="mt-2 text-2xl font-bold text-slate-800 print:text-slate-900 print:text-xl">{value}</div>
+      <p className="mt-1 text-xs text-slate-400 print:text-slate-600">{desc}</p>
     </div>
   );
 }

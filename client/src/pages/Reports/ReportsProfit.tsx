@@ -130,7 +130,7 @@ export default function ReportsProfit() {
                 data.products.map((p: any, idx: number) => {
                   const margin = p.revenue > 0 ? (p.profit / p.revenue) * 100 : 0;
                   return (
-                    <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
+                    <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50 print:break-inside-avoid">
                       <td className="px-6 py-3 font-medium text-slate-800">{p.productName}</td>
                       <td className="px-6 py-3 text-right text-slate-600">{p.qtySold}</td>
                       <td className="px-6 py-3 text-right text-slate-800 font-medium">{formatINR(p.revenue)}</td>
