@@ -64,8 +64,8 @@ export default function CreateOrder() {
   async function searchProducts(q: string) {
     setSearching(true);
     try {
-      const res = await axios.get("/api/products/search", { params: { q }, withCredentials: true });
-      setProducts(res.data);
+      const res = await axios.get("/api/products", { params: { q, active: "true", limit: 15 }, withCredentials: true });
+      setProducts(res.data.items || res.data);
     } catch (e) {
       console.error(e);
     } finally {
