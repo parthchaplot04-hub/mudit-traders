@@ -24,7 +24,7 @@ interface CreateSaleInput {
   customerId?: string;
   items: CreateSaleItemInput[];
   discountRupees: number;
-  paymentType: "CASH" | "UPI" | "CHEQUE" | "CREDIT";
+  payments: { method: "CASH" | "UPI" | "CHEQUE" | "CREDIT" | "OTHER"; amountPaise: number }[];
 }
 
 function getIndiaDateKey(date = new Date()): string {
@@ -62,7 +62,8 @@ async function nextBillNumber(session: mongoose.ClientSession): Promise<string> 
  * Rolls back completely on any failure (spec section 8).
  */
 export async function createSale(input: CreateSaleInput, userId: string) {
-  if (input.paymentType === "CREDIT" && !input.customerId) {
+  const hasCredit = input.payments.some(p => p.method === "CREDIT");
+  if (hasCredit && !input.customerId) {
     throw new SaleError("A customer must be selected for a credit sale", 400);
   }
 
@@ -154,7 +155,8 @@ export async function createSale(input: CreateSaleInput, userId: string) {
             discountPaise,
             totalGstPaise,
             totalPaise,
-            paymentType: input.paymentType,
+            paymentType: input.payments[0].method,
+            payments: input.payments,
             status: "COMPLETED",
             createdBy: userId,
           },
@@ -163,11 +165,12 @@ export async function createSale(input: CreateSaleInput, userId: string) {
       );
       saleDoc = created;
 
-      if (input.paymentType === "CREDIT" && input.customerId) {
+      const creditPayment = input.payments.find(p => p.method === "CREDIT");
+      if (creditPayment && input.customerId) {
         const customer = await Customer.findById(input.customerId).session(session);
         if (!customer) throw new SaleError("Customer not found", 404);
 
-        customer.outstandingPaise += totalPaise;
+        customer.outstandingPaise += creditPayment.amountPaise;
         await customer.save({ session });
 
         await CustomerLedgerEntry.create(
@@ -175,7 +178,7 @@ export async function createSale(input: CreateSaleInput, userId: string) {
             {
               customerId: customer._id,
               type: "SALE_CREDIT",
-              amountPaise: totalPaise,
+              amountPaise: creditPayment.amountPaise,
               referenceId: created._id,
               balanceAfterPaise: customer.outstandingPaise,
               userId,
@@ -234,17 +237,18 @@ export async function cancelSale(saleId: string, reason: string, userId: string)
         );
       }
 
-      if (sale.paymentType === "CREDIT" && sale.customerId) {
+      const creditPayment = sale.payments?.find(p => p.method === "CREDIT");
+      if (creditPayment && sale.customerId) {
         const customer = await Customer.findById(sale.customerId).session(session);
         if (customer) {
-          customer.outstandingPaise -= sale.totalPaise;
+          customer.outstandingPaise -= creditPayment.amountPaise;
           await customer.save({ session });
           await CustomerLedgerEntry.create(
             [
               {
                 customerId: customer._id,
                 type: "ADJUSTMENT",
-                amountPaise: -sale.totalPaise,
+                amountPaise: -creditPayment.amountPaise,
                 referenceId: sale._id,
                 balanceAfterPaise: customer.outstandingPaise,
                 userId,

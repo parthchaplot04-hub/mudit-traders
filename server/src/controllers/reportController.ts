@@ -46,9 +46,18 @@ export async function getSummary(req: AuthedRequest, res: Response) {
     // Payment Methods Breakdown (Sales)
     let cashCollected = 0, upiCollected = 0, creditSales = 0;
     sales.forEach(s => {
-      if (s.paymentType === "CASH") cashCollected += s.totalPaise;
-      if (s.paymentType === "UPI") upiCollected += s.totalPaise;
-      if (s.paymentType === "CREDIT") creditSales += s.totalPaise;
+      if (s.payments && s.payments.length > 0) {
+        s.payments.forEach(p => {
+          if (p.method === "CASH") cashCollected += p.amountPaise;
+          if (p.method === "UPI") upiCollected += p.amountPaise;
+          if (p.method === "CREDIT") creditSales += p.amountPaise;
+        });
+      } else if (s.paymentType) {
+        // Fallback for older documents
+        if (s.paymentType === "CASH") cashCollected += s.totalPaise;
+        if (s.paymentType === "UPI") upiCollected += s.totalPaise;
+        if (s.paymentType === "CREDIT") creditSales += s.totalPaise;
+      }
     });
 
     // Current Inventory Value
@@ -195,7 +204,7 @@ export async function getTransactions(req: AuthedRequest, res: Response) {
       type: "SALE",
       referenceId: s.billNumber,
       amount: s.totalPaise,
-      paymentMethod: s.paymentType,
+      paymentMethod: s.payments && s.payments.length > 0 ? s.payments.map((p: any) => p.method).join(", ") : s.paymentType,
       status: s.status,
       user: (s.createdBy as any)?.name || "Unknown"
     }));

@@ -387,7 +387,7 @@ export async function billOrder(req: AuthedRequest, res: Response): Promise<void
  */
 export async function recordPayment(req: AuthedRequest, res: Response): Promise<void> {
   try {
-    const { paymentMode, amountPaidPaise } = req.body;
+    const { payments } = req.body;
     
     const order = await Order.findById(req.params.id);
     if (!order) {
@@ -399,24 +399,26 @@ export async function recordPayment(req: AuthedRequest, res: Response): Promise<
       res.status(400).json({ message: "Order not in payment pending state." });
       return;
     }
-    if (!paymentMode) {
-      res.status(400).json({ message: "Payment mode required." });
+    if (!payments || !Array.isArray(payments) || payments.length === 0) {
+      res.status(400).json({ message: "Payments array required." });
       return;
     }
 
     order.paymentStatus = "COMPLETED";
-    order.paymentMode = paymentMode;
-    order.amountPaidPaise = amountPaidPaise;
+    order.payments = payments;
     order.paymentReceivedAt = new Date();
     order.status = "READY_FOR_HANDOVER";
 
     // Also update the connected Sale's payment method
     if (order.invoiceId) {
-      await Sale.findByIdAndUpdate(order.invoiceId, { paymentType: paymentMode });
+      await Sale.findByIdAndUpdate(order.invoiceId, { 
+        paymentType: payments[0].method, // backward compatibility
+        payments: payments 
+      });
     }
 
     await order.save();
-    await logAudit("PAYMENT_RECEIVED", order._id, req.user!.userId, `Payment completed via ${paymentMode}`);
+    await logAudit("PAYMENT_RECEIVED", order._id, req.user!.userId, `Payment completed via ${payments.map((p: any) => p.method).join(", ")}`);
 
     res.status(200).json(order);
   } catch (error: any) {

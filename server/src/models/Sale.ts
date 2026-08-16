@@ -28,6 +28,19 @@ const saleItemSchema = new Schema<ISaleItem>(
   { _id: false }
 );
 
+export interface IPaymentRecord {
+  method: "CASH" | "UPI" | "CHEQUE" | "CREDIT" | "OTHER";
+  amountPaise: number;
+}
+
+const paymentRecordSchema = new Schema<IPaymentRecord>(
+  {
+    method: { type: String, enum: ["CASH", "UPI", "CHEQUE", "CREDIT", "OTHER"], required: true },
+    amountPaise: { type: Number, required: true, min: 0 }
+  },
+  { _id: false }
+);
+
 export type SaleStatus = "COMPLETED" | "CANCELLED";
 
 export interface ISale extends Document {
@@ -39,7 +52,8 @@ export interface ISale extends Document {
   discountPaise: number;
   totalGstPaise: number;
   totalPaise: number;
-  paymentType: PaymentType;
+  paymentType?: PaymentType; // Deprecated, keep for backward compatibility
+  payments?: IPaymentRecord[];
   status: SaleStatus;
   cancelledReason?: string;
   createdBy: Types.ObjectId;
@@ -56,7 +70,8 @@ const saleSchema = new Schema<ISale>(
     discountPaise: { type: Number, required: true, default: 0 },
     totalGstPaise: { type: Number, required: true, default: 0 },
     totalPaise: { type: Number, required: true },
-    paymentType: { type: String, enum: ["CASH", "UPI", "CHEQUE", "CREDIT"], required: true },
+    paymentType: { type: String, enum: ["CASH", "UPI", "CHEQUE", "CREDIT"] },
+    payments: { type: [paymentRecordSchema] },
     status: { type: String, enum: ["COMPLETED", "CANCELLED"], default: "COMPLETED" },
     cancelledReason: String,
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },

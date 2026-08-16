@@ -66,8 +66,7 @@ export interface IOrder extends Document {
   // Post-billing tracking
   invoiceId?: Types.ObjectId;
   paymentStatus: "PENDING" | "COMPLETED";
-  paymentMode?: string;
-  amountPaidPaise?: number;
+  payments?: { method: string, amountPaise: number }[];
   paymentReceivedAt?: Date;
   
   handoverStatus: "PENDING" | "COMPLETED";
@@ -105,8 +104,10 @@ const orderSchema = new Schema<IOrder>(
     
     invoiceId: { type: Schema.Types.ObjectId, ref: "Sale" },
     paymentStatus: { type: String, enum: ["PENDING", "COMPLETED"], default: "PENDING" },
-    paymentMode: { type: String, enum: ["CASH", "UPI", "CREDIT", "CHEQUE", "OTHER"] },
-    amountPaidPaise: { type: Number },
+    payments: [{
+      method: { type: String, enum: ["CASH", "UPI", "CREDIT", "CHEQUE", "OTHER"], required: true },
+      amountPaise: { type: Number, required: true }
+    }],
     paymentReceivedAt: { type: Date },
     
     handoverStatus: { type: String, enum: ["PENDING", "COMPLETED"], default: "PENDING" },

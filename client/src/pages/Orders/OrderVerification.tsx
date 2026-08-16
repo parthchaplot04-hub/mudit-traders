@@ -15,7 +15,9 @@ export default function OrderVerification() {
   const [discountType, setDiscountType] = useState<"AMOUNT" | "PERCENT">("AMOUNT");
   const [discountValue, setDiscountValue] = useState(0);
   
-  const [paymentMode, setPaymentMode] = useState("");
+  const [payments, setPayments] = useState<{ method: string, amount: number }[]>([]);
+  const [currentPaymentMode, setCurrentPaymentMode] = useState("CASH");
+  const [currentPaymentAmount, setCurrentPaymentAmount] = useState<number | "">("");
   const [paymentDone, setPaymentDone] = useState(false);
   const [handoverDone, setHandoverDone] = useState(false);
 
@@ -29,7 +31,6 @@ export default function OrderVerification() {
       setOrder(res.data);
       if (res.data.paymentStatus === "COMPLETED") {
         setPaymentDone(true);
-        setPaymentMode(res.data.paymentMode || "");
       }
       if (res.data.handoverStatus === "COMPLETED") setHandoverDone(true);
     } catch (err) {
@@ -63,18 +64,19 @@ export default function OrderVerification() {
     }
   };
 
-  const handlePaymentWithAmount = async (amountPaid: number) => {
-    if (!paymentMode) {
-      toast.error("Select payment mode first");
+  const handlePaymentWithAmount = async (paymentArr: {method: string, amount: number}[]) => {
+    if (paymentArr.length === 0) {
+      toast.error("Add at least one payment method");
       return;
     }
     setSubmitting(true);
     try {
-      await axios.put(`/api/orders/${id}/payment`, { 
-        paymentMode,
-        amountPaidPaise: Math.round(amountPaid * 100)
-      }, { withCredentials: true });
-      toast.success("Payment Recorded");
+      const formattedPayments = paymentArr.map(p => ({
+        method: p.method,
+        amountPaise: Math.round(p.amount * 100)
+      }));
+      await axios.put(`/api/orders/${id}/payment`, { payments: formattedPayments }, { withCredentials: true });
+      toast.success("Payments Recorded");
       fetchOrder();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to save payment");
@@ -318,47 +320,77 @@ export default function OrderVerification() {
                 {!paymentDone ? (
                   <div className="space-y-4">
                     
+                    {payments.length > 0 && (
+                      <div className="space-y-2 mb-4">
+                        {payments.map((p, idx) => (
+                          <div key={idx} className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-200 text-sm">
+                            <span className="font-bold text-slate-700">{p.method}</span>
+                            <span className="font-bold text-slate-900">₹{p.amount.toFixed(2)}</span>
+                            <button onClick={() => setPayments(prev => prev.filter((_, i) => i !== idx))} className="text-red-500 font-bold hover:text-red-700">X</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Amount Paid (₹)</label>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="block text-sm font-bold text-slate-700">Amount Paid (₹)</label>
+                        <span className="text-xs font-bold text-red-600">
+                          Remaining: ₹{Math.max(0, (order.invoiceId?.totalPaise - payments.reduce((acc, p) => acc + p.amount * 100, 0)) / 100).toFixed(2)}
+                        </span>
+                      </div>
                       <input 
                         type="number"
-                        className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                        className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold mb-4"
                         placeholder="Amount"
-                        defaultValue={(order.invoiceId?.totalPaise / 100).toFixed(2)}
-                        id="amountPaidInput"
+                        value={currentPaymentAmount}
+                        onChange={(e) => setCurrentPaymentAmount(e.target.value === "" ? "" : parseFloat(e.target.value))}
                       />
-                    </div>
 
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Paid Via</label>
-                      <div className="grid grid-cols-2 gap-2">
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Method</label>
+                      <div className="grid grid-cols-4 gap-2 mb-4">
                         {['CASH', 'UPI', 'CREDIT', 'CHEQUE'].map((method) => (
                           <button
                             key={method}
-                            onClick={() => setPaymentMode(method)}
-                            className={`py-3 text-sm font-bold rounded-lg border-2 ${paymentMode === method ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-white border-slate-200 text-slate-600'}`}
+                            onClick={() => setCurrentPaymentMode(method)}
+                            className={`py-2 text-xs font-bold rounded border-2 ${currentPaymentMode === method ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-white border-slate-200 text-slate-600'}`}
                           >
                             {method}
                           </button>
                         ))}
                       </div>
+
+                      <button
+                        onClick={() => {
+                          if (currentPaymentAmount && typeof currentPaymentAmount === "number" && currentPaymentAmount > 0) {
+                            setPayments(prev => [...prev, { method: currentPaymentMode, amount: currentPaymentAmount }]);
+                            setCurrentPaymentAmount("");
+                          }
+                        }}
+                        disabled={!currentPaymentAmount}
+                        className="w-full py-2 bg-slate-800 text-white font-bold rounded shadow-sm hover:bg-slate-900 disabled:opacity-50 transition text-sm"
+                      >
+                        + Add Payment
+                      </button>
                     </div>
 
                     <button
-                      onClick={() => {
-                        const amtElement = document.getElementById("amountPaidInput") as HTMLInputElement;
-                        const amountPaid = parseFloat(amtElement?.value || "0");
-                        handlePaymentWithAmount(amountPaid);
-                      }}
-                      disabled={submitting || !paymentMode}
+                      onClick={() => handlePaymentWithAmount(payments)}
+                      disabled={submitting || payments.length === 0}
                       className="w-full py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-sm hover:bg-emerald-700 disabled:opacity-50 transition"
                     >
-                      Record Payment
+                      Record Payments & Continue
                     </button>
                   </div>
                 ) : (
-                  <div className="bg-emerald-50 text-emerald-800 font-bold p-4 rounded-lg flex items-center gap-2">
-                    <CheckCircle2 /> Paid via {paymentMode}
+                  <div className="bg-emerald-50 text-emerald-800 p-4 rounded-lg flex flex-col gap-2">
+                    <div className="flex items-center gap-2 font-bold"><CheckCircle2 /> Payment Completed</div>
+                    {order.payments && order.payments.map((p: any, idx: number) => (
+                      <div key={idx} className="flex justify-between text-sm font-medium">
+                        <span>{p.method}</span>
+                        <span>₹{(p.amountPaise / 100).toFixed(2)}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

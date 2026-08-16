@@ -15,10 +15,14 @@ export default function POS() {
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [discountRupees, setDiscountRupees] = useState(0);
-  const [paymentType, setPaymentType] = useState<PaymentType>("CASH");
+  const [payments, setPayments] = useState<{ method: PaymentType, amount: number }[]>([]);
+  const [currentPaymentMode, setCurrentPaymentMode] = useState<PaymentType>("CASH");
+  const [currentPaymentAmount, setCurrentPaymentAmount] = useState<number | "">("");
   const [customerId, setCustomerId] = useState<string>("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [lastBill, setLastBill] = useState<any>(null);
+
+  const hasCredit = payments.some(p => p.method === "CREDIT");
 
   const { data: searchResults } = useQuery<{ items: Product[] }>({
     queryKey: ["product-search", search],
@@ -36,7 +40,7 @@ export default function POS() {
         return { items: [] }; // customer routes are optional in this slice
       }
     },
-    enabled: paymentType === "CREDIT",
+    enabled: hasCredit,
   });
 
   function addToCart(product: Product) {
@@ -75,14 +79,15 @@ export default function POS() {
   );
   const discountPaise = Math.round(discountRupees * 100);
   const totalPaise = subtotalPaise + gstPaise - discountPaise;
+  const remainingBalance = Math.max(0, (totalPaise - payments.reduce((acc, p) => acc + p.amount * 100, 0)) / 100);
 
   const saleMutation = useMutation({
     mutationFn: async () => {
       const payload = {
-        customerId: paymentType === "CREDIT" ? customerId : undefined,
+        customerId: hasCredit ? customerId : undefined,
         items: cart.map((l) => ({ productId: l.product._id, quantity: l.quantity })),
         discountRupees,
-        paymentType,
+        payments: payments.map(p => ({ method: p.method, amountPaise: Math.round(p.amount * 100) })),
       };
       return (await api.post("/sales", payload)).data;
     },
@@ -91,6 +96,7 @@ export default function POS() {
       setLastBill(data.sale);
       setCart([]);
       setDiscountRupees(0);
+      setPayments([]);
       setCustomerId("");
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
@@ -102,8 +108,12 @@ export default function POS() {
   function completeSale() {
     setMessage(null);
     if (cart.length === 0) return;
-    if (paymentType === "CREDIT" && !customerId) {
+    if (hasCredit && !customerId) {
       setMessage({ type: "error", text: "Select a customer for a credit sale." });
+      return;
+    }
+    if (payments.length === 0) {
+      setMessage({ type: "error", text: "Please add at least one payment method." });
       return;
     }
     saleMutation.mutate();
@@ -224,24 +234,62 @@ export default function POS() {
 
           <div>
             <p className="text-sm font-medium text-slate-700 mb-2">Payment</p>
-            <div className="grid grid-cols-4 gap-2">
-              {(["CASH", "UPI", "CHEQUE", "CREDIT"] as PaymentType[]).map((pt) => (
-                <button
-                  key={pt}
-                  onClick={() => setPaymentType(pt)}
-                  className={`py-2 rounded-lg text-xs font-semibold border ${
-                    paymentType === pt
-                      ? "bg-emerald-600 text-white border-emerald-600"
-                      : "bg-white text-slate-600 border-slate-200"
-                  }`}
-                >
-                  {pt}
-                </button>
-              ))}
+            
+            {payments.length > 0 && (
+              <div className="space-y-2 mb-4">
+                {payments.map((p, idx) => (
+                  <div key={idx} className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-200 text-sm">
+                    <span className="font-bold text-slate-700">{p.method}</span>
+                    <span className="font-bold text-slate-900">₹{p.amount.toFixed(2)}</span>
+                    <button onClick={() => setPayments(prev => prev.filter((_, i) => i !== idx))} className="text-red-500 font-bold hover:text-red-700">X</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+              <div className="flex justify-between text-xs font-bold text-slate-500 mb-2">
+                <span>Add Payment</span>
+                <span className="text-red-500">Remaining: ₹{remainingBalance.toFixed(2)}</span>
+              </div>
+              <input
+                type="number"
+                placeholder="Amount"
+                value={currentPaymentAmount}
+                onChange={(e) => setCurrentPaymentAmount(e.target.value === "" ? "" : parseFloat(e.target.value))}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 mb-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+              <div className="grid grid-cols-4 gap-1 mb-2">
+                {(["CASH", "UPI", "CHEQUE", "CREDIT"] as PaymentType[]).map((pt) => (
+                  <button
+                    key={pt}
+                    onClick={() => setCurrentPaymentMode(pt)}
+                    className={`py-1.5 rounded text-xs font-semibold border ${
+                      currentPaymentMode === pt
+                        ? "bg-emerald-600 text-white border-emerald-600"
+                        : "bg-white text-slate-600 border-slate-200"
+                    }`}
+                  >
+                    {pt}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => {
+                  if (currentPaymentAmount && typeof currentPaymentAmount === "number" && currentPaymentAmount > 0) {
+                    setPayments(prev => [...prev, { method: currentPaymentMode, amount: currentPaymentAmount }]);
+                    setCurrentPaymentAmount("");
+                  }
+                }}
+                disabled={!currentPaymentAmount}
+                className="w-full py-2 bg-slate-800 text-white font-bold rounded text-xs hover:bg-slate-900 disabled:opacity-50"
+              >
+                + Add
+              </button>
             </div>
           </div>
 
-          {paymentType === "CREDIT" && (
+          {hasCredit && (
             <select
               value={customerId}
               onChange={(e) => setCustomerId(e.target.value)}
@@ -300,7 +348,7 @@ export default function POS() {
       
       <Invoice 
         sale={lastBill} 
-        customerName={paymentType === "CREDIT" ? customers?.items.find(c => c._id === customerId)?.name : undefined} 
+        customerName={hasCredit ? customers?.items.find(c => c._id === customerId)?.name : undefined} 
       />
     </div>
   );

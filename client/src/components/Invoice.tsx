@@ -35,7 +35,7 @@ export function Invoice({ sale, customerName }: { sale: any; customerName?: stri
           <div className="mt-2 text-sm text-slate-600">
             <p><span className="font-semibold">Bill No:</span> {sale.billNumber}</p>
             <p><span className="font-semibold">Date:</span> {date}</p>
-            <p><span className="font-semibold">Payment:</span> {sale.paymentType}</p>
+            <p><span className="font-semibold">Payment:</span> {sale.payments && sale.payments.length > 0 ? sale.payments.map((p: any) => `${p.method} (₹${(p.amountPaise / 100).toFixed(2)})`).join(', ') : sale.paymentType}</p>
           </div>
         </div>
       </div>
