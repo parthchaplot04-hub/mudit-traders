@@ -63,7 +63,7 @@ export default function OrderVerification() {
     }
   };
 
-  const handlePayment = async () => {
+  const handlePaymentWithAmount = async (amountPaid: number) => {
     if (!paymentMode) {
       toast.error("Select payment mode first");
       return;
@@ -71,7 +71,8 @@ export default function OrderVerification() {
     setSubmitting(true);
     try {
       await axios.put(`/api/orders/${id}/payment`, { 
-        paymentMode 
+        paymentMode,
+        amountPaidPaise: Math.round(amountPaid * 100)
       }, { withCredentials: true });
       toast.success("Payment Recorded");
       fetchOrder();
@@ -316,13 +317,21 @@ export default function OrderVerification() {
                 
                 {!paymentDone ? (
                   <div className="space-y-4">
-                    <label className="flex items-center gap-2 font-bold text-red-600 bg-red-50 p-3 rounded-lg border border-red-200 cursor-pointer">
-                      <input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={paymentDone} onChange={e => setPaymentDone(e.target.checked)} />
-                      Payment Received (₹{(order.invoiceId?.totalPaise / 100).toFixed(2)})
-                    </label>
                     
-                    {paymentDone && (
-                      <div className="grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-top-2">
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Amount Paid (₹)</label>
+                      <input 
+                        type="number"
+                        className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                        placeholder="Amount"
+                        defaultValue={(order.invoiceId?.totalPaise / 100).toFixed(2)}
+                        id="amountPaidInput"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Paid Via</label>
+                      <div className="grid grid-cols-2 gap-2">
                         {['CASH', 'UPI', 'CREDIT', 'CHEQUE'].map((method) => (
                           <button
                             key={method}
@@ -333,12 +342,16 @@ export default function OrderVerification() {
                           </button>
                         ))}
                       </div>
-                    )}
+                    </div>
 
                     <button
-                      onClick={handlePayment}
-                      disabled={submitting || !paymentDone || !paymentMode}
-                      className="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl shadow-sm hover:bg-emerald-700 disabled:opacity-50 transition"
+                      onClick={() => {
+                        const amtElement = document.getElementById("amountPaidInput") as HTMLInputElement;
+                        const amountPaid = parseFloat(amtElement?.value || "0");
+                        handlePaymentWithAmount(amountPaid);
+                      }}
+                      disabled={submitting || !paymentMode}
+                      className="w-full py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-sm hover:bg-emerald-700 disabled:opacity-50 transition"
                     >
                       Record Payment
                     </button>
