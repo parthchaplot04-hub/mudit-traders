@@ -370,16 +370,12 @@ export default function OrderVerification() {
                 <h3 className="font-bold text-slate-800 mb-4">Handover</h3>
                 {!handoverDone ? (
                   <div className="space-y-4">
-                    <label className="flex items-center gap-2 font-bold text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200 cursor-pointer">
-                      <input type="checkbox" className="w-5 h-5 accent-teal-600" checked={handoverDone} onChange={e => setHandoverDone(e.target.checked)} />
-                      Goods Handed to Customer
-                    </label>
                     <button
                       onClick={handleHandover}
-                      disabled={submitting || !handoverDone}
+                      disabled={submitting}
                       className="w-full py-4 bg-teal-600 text-white font-bold text-lg rounded-xl shadow-lg hover:bg-teal-700 disabled:opacity-50 transition flex items-center justify-center gap-2"
                     >
-                      <CheckCircle2 size={24} /> Complete Order
+                      <CheckCircle2 size={24} /> Complete Handover & Finish Order
                     </button>
                   </div>
                 ) : (
