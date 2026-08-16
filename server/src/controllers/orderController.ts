@@ -1,39 +1,40 @@
 import { Response } from "express";
 import { AuthedRequest } from "../middleware/auth";
-import { Order, OrderStatus } from "../models/Order";
+import { Order, OrderStatus, IOrderItem } from "../models/Order";
 import { Product } from "../models/Product";
 import { Counter } from "../models/Counter";
 import { Sale } from "../models/Sale";
 import { StockTransaction } from "../models/StockTransaction";
 import { AuditLog } from "../models/AuditLog";
 
-/**
- * Helper to generate the next order number.
- */
 async function generateOrderNumber(): Promise<string> {
   const counter = await Counter.findOneAndUpdate(
     { key: "orderNumber" },
     { $inc: { sequence: 1 } },
     { new: true, upsert: true }
   );
-  return `ORD-${counter.sequence.toString().padStart(5, "0")}`;
+  return `MT-${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${counter.sequence.toString().padStart(3, "0")}`;
 }
 
-/**
- * Helper to generate the next bill number for Sale conversion.
- */
 async function generateBillNumber(): Promise<string> {
   const counter = await Counter.findOneAndUpdate(
     { key: "billNumber" },
     { $inc: { sequence: 1 } },
     { new: true, upsert: true }
   );
-  return `BILL-${counter.sequence.toString().padStart(6, "0")}`;
+  return `INV-${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${counter.sequence.toString().padStart(3, "0")}`;
 }
 
-/**
- * Get all orders with pagination and status filters
- */
+async function logAudit(action: string, orderId: any, userId: string, notes: string = "") {
+  await AuditLog.create({
+    action,
+    entityType: "ORDER",
+    entityId: orderId,
+    userId,
+    notes,
+  });
+}
+
 export async function getOrders(req: AuthedRequest, res: Response): Promise<void> {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -42,9 +43,7 @@ export async function getOrders(req: AuthedRequest, res: Response): Promise<void
     const skip = (page - 1) * limit;
 
     const query: any = {};
-    if (status) {
-      query.status = status;
-    }
+    if (status) query.status = status;
 
     const [items, total] = await Promise.all([
       Order.find(query)
@@ -57,26 +56,19 @@ export async function getOrders(req: AuthedRequest, res: Response): Promise<void
       Order.countDocuments(query),
     ]);
 
-    res.status(200).json({
-      data: items,
-      total,
-      page,
-      pages: Math.ceil(total / limit),
-    });
+    res.status(200).json({ data: items, total, page, pages: Math.ceil(total / limit) });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
 }
 
-/**
- * Get single order details
- */
 export async function getOrderById(req: AuthedRequest, res: Response): Promise<void> {
   try {
     const order = await Order.findById(req.params.id)
       .populate("customerId", "name phone address")
       .populate("createdBy", "name role")
-      .populate("pickedBy", "name role");
+      .populate("pickedBy", "name role")
+      .populate("invoiceId");
       
     if (!order) {
       res.status(404).json({ message: "Order not found" });
@@ -88,9 +80,6 @@ export async function getOrderById(req: AuthedRequest, res: Response): Promise<v
   }
 }
 
-/**
- * Create a new PENDING order
- */
 export async function createOrder(req: AuthedRequest, res: Response): Promise<void> {
   try {
     const { customerId, items, notes } = req.body;
@@ -100,17 +89,15 @@ export async function createOrder(req: AuthedRequest, res: Response): Promise<vo
       return;
     }
 
-    // Verify products
     const productIds = items.map((i: any) => i.productId);
     const products = await Product.find({ _id: { $in: productIds } });
     if (products.length !== productIds.length) {
-      res.status(400).json({ message: "One or more products are invalid." });
+      res.status(400).json({ message: "Invalid products." });
       return;
     }
 
     const orderNumber = await generateOrderNumber();
     
-    // Map items mapping current snapshotted prices
     const orderItems = items.map((item: any) => {
       const product = products.find((p) => p._id.toString() === item.productId);
       return {
@@ -129,19 +116,12 @@ export async function createOrder(req: AuthedRequest, res: Response): Promise<vo
       customerId: customerId || undefined,
       items: orderItems,
       notes,
-      status: "PENDING",
+      status: "WAITING_FOR_STAFF",
       createdBy: req.user!.userId,
     });
 
     await newOrder.save();
-
-    await AuditLog.create({
-      action: "CREATE",
-      entityType: "ORDER",
-      entityId: newOrder._id,
-      userId: req.user!.userId,
-      newValue: newOrder.toObject(),
-    });
+    await logAudit("CREATE", newOrder._id, req.user!.userId, "Order created");
 
     res.status(201).json(newOrder);
   } catch (error: any) {
@@ -149,36 +129,82 @@ export async function createOrder(req: AuthedRequest, res: Response): Promise<vo
   }
 }
 
+// --------------------------------------------------------------------------
+// STRICT WORKFLOW ENDPOINTS
+// --------------------------------------------------------------------------
+
 /**
- * Change order status directly (e.g. PENDING -> PICKING, READY_FOR_CHECK -> CHECKED)
+ * 1. Staff toggles an item as COLLECTED (saves actual weighed quantity)
  */
-export async function updateOrderStatus(req: AuthedRequest, res: Response): Promise<void> {
+export async function collectItem(req: AuthedRequest, res: Response): Promise<void> {
   try {
-    const { status } = req.body;
+    const { itemId } = req.params;
+    const { pickedQuantity } = req.body;
+    
     const order = await Order.findById(req.params.id);
     if (!order) {
       res.status(404).json({ message: "Order not found" });
       return;
     }
 
-    const oldStatus = order.status;
-    order.status = status;
+    const item = (order.items as any).id(itemId);
+    if (!item) {
+      res.status(404).json({ message: "Item not found" });
+      return;
+    }
+
+    item.isCollected = true;
+    item.collectedAt = new Date();
+    if (pickedQuantity !== undefined) item.pickedQuantity = pickedQuantity;
     
-    if (status === "PICKING" && oldStatus === "PENDING") {
-      order.pickedBy = req.user!.userId as any; // Mark whoever started picking
+    // Auto-update status to COLLECTING_ITEMS if first item
+    if (order.status === "WAITING_FOR_STAFF") {
+      order.status = "COLLECTING_ITEMS";
+      order.pickedBy = req.user!.userId as any;
     }
 
     await order.save();
+    await logAudit("ITEM_COLLECTED", order._id, req.user!.userId, `Collected ${item.productName} (${item.pickedQuantity || item.orderedQuantity} ${item.salesUnit})`);
+    
+    res.status(200).json(order);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+}
 
-    await AuditLog.create({
-      action: "UPDATE",
-      entityType: "ORDER",
-      entityId: order._id,
-      userId: req.user!.userId,
-      oldValue: { status: oldStatus },
-      newValue: { status: order.status },
-      notes: `Order status changed from ${oldStatus} to ${order.status}`,
-    });
+/**
+ * 2. Staff toggles an item as PACKED
+ */
+export async function packItem(req: AuthedRequest, res: Response): Promise<void> {
+  try {
+    const { itemId } = req.params;
+    
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      res.status(404).json({ message: "Order not found" });
+      return;
+    }
+
+    const item = (order.items as any).id(itemId);
+    if (!item) {
+      res.status(404).json({ message: "Item not found" });
+      return;
+    }
+    if (!item.isCollected) {
+      res.status(400).json({ message: "Cannot pack before collecting" });
+      return;
+    }
+
+    item.isPacked = true;
+    item.packedAt = new Date();
+    
+    // Auto-update status to PACKING
+    if (order.status === "COLLECTING_ITEMS") {
+      order.status = "PACKING";
+    }
+
+    await order.save();
+    await logAudit("ITEM_PACKED", order._id, req.user!.userId, `Packed ${item.productName}`);
 
     res.status(200).json(order);
   } catch (error: any) {
@@ -187,33 +213,27 @@ export async function updateOrderStatus(req: AuthedRequest, res: Response): Prom
 }
 
 /**
- * Submit picked quantities by staff and move to READY_FOR_CHECK
+ * 3. Staff submits entire order to owner
  */
-export async function submitPicking(req: AuthedRequest, res: Response): Promise<void> {
+export async function submitToOwner(req: AuthedRequest, res: Response): Promise<void> {
   try {
-    const { items } = req.body; // Array of { productId, pickedQuantity }
-    
     const order = await Order.findById(req.params.id);
     if (!order) {
       res.status(404).json({ message: "Order not found" });
       return;
     }
 
-    if (order.status === "BILLED" || order.status === "CANCELLED") {
-      res.status(400).json({ message: "Cannot modify a billed or cancelled order." });
+    const allCollected = order.items.every(i => i.isCollected);
+    const allPacked = order.items.every(i => i.isPacked);
+
+    if (!allCollected || !allPacked) {
+      res.status(400).json({ message: "All items must be collected and packed first." });
       return;
     }
 
-    order.items.forEach((orderItem) => {
-      const match = items.find((i: any) => i.productId === orderItem.productId.toString());
-      if (match) {
-        orderItem.pickedQuantity = match.pickedQuantity;
-      }
-    });
-
-    order.status = "READY_FOR_CHECK";
-    order.pickedBy = req.user!.userId as any;
+    order.status = "WAITING_FOR_OWNER_CHECK";
     await order.save();
+    await logAudit("SENT_TO_OWNER", order._id, req.user!.userId, "Staff submitted to owner");
 
     res.status(200).json(order);
   } catch (error: any) {
@@ -222,12 +242,53 @@ export async function submitPicking(req: AuthedRequest, res: Response): Promise<
 }
 
 /**
- * Convert Order to Sale (Billing Step)
- * This calculates final amounts based on `pickedQuantity` or updated quantities submitted by the owner.
+ * 4. Owner toggles an item as VERIFIED
+ */
+export async function verifyItem(req: AuthedRequest, res: Response): Promise<void> {
+  try {
+    const { itemId } = req.params;
+    
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      res.status(404).json({ message: "Order not found" });
+      return;
+    }
+
+    const item = (order.items as any).id(itemId);
+    if (!item) {
+      res.status(404).json({ message: "Item not found" });
+      return;
+    }
+
+    item.isVerified = true;
+    item.verifiedAt = new Date();
+
+    if (order.status === "WAITING_FOR_OWNER_CHECK") {
+      order.status = "OWNER_CHECKING";
+    }
+
+    await order.save();
+    await logAudit("ITEM_VERIFIED", order._id, req.user!.userId, `Verified ${item.productName}`);
+
+    // If all verified, auto-transition to READY_FOR_BILLING
+    const allVerified = order.items.every(i => i.isVerified);
+    if (allVerified) {
+      order.status = "READY_FOR_BILLING";
+      await order.save();
+    }
+
+    res.status(200).json(order);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+/**
+ * 5. Owner creates Bill
  */
 export async function billOrder(req: AuthedRequest, res: Response): Promise<void> {
   try {
-    const { paymentType, items: updatedItems, discountPaise } = req.body;
+    const { discountPaise } = req.body;
     
     const order = await Order.findById(req.params.id);
     if (!order) {
@@ -235,8 +296,8 @@ export async function billOrder(req: AuthedRequest, res: Response): Promise<void
       return;
     }
 
-    if (order.status === "BILLED" || order.status === "CANCELLED") {
-      res.status(400).json({ message: "Order is already billed or cancelled." });
+    if (order.status !== "READY_FOR_BILLING") {
+      res.status(400).json({ message: "Order not ready for billing. All items must be verified." });
       return;
     }
 
@@ -244,24 +305,15 @@ export async function billOrder(req: AuthedRequest, res: Response): Promise<void
     let totalGstPaise = 0;
     const saleItems = [];
 
-    // The owner might have tweaked the quantities or prices at the billing stage, so we use `updatedItems` if provided,
-    // otherwise fallback to what was currently on the order.
-    const itemsToBill = updatedItems || order.items.map(i => ({
-      productId: i.productId.toString(),
-      quantity: i.pickedQuantity ?? i.orderedQuantity,
-      unitPricePaise: i.unitPricePaise,
-    }));
+    const products = await Product.find({ _id: { $in: order.items.map(i => i.productId) } });
 
-    // Re-verify products
-    const productIds = itemsToBill.map((i: any) => i.productId);
-    const products = await Product.find({ _id: { $in: productIds } });
-
-    for (const item of itemsToBill) {
-      const product = products.find((p) => p._id.toString() === item.productId);
+    for (const item of order.items) {
+      const product = products.find((p) => p._id.toString() === item.productId.toString());
       if (!product) continue;
-      if (item.quantity <= 0) continue; // Skip items that were not picked at all
+      
+      const qty = item.pickedQuantity ?? item.orderedQuantity;
+      if (qty <= 0) continue; 
 
-      const qty = item.quantity;
       const unitPrice = item.unitPricePaise;
       
       const taxableValue = Math.round(qty * unitPrice);
@@ -283,11 +335,10 @@ export async function billOrder(req: AuthedRequest, res: Response): Promise<void
         totalPaise: totalItemAmt,
       });
 
-      // Update Inventory
+      // STRICT INVENTORY DEDUCTION (Only happens once upon bill creation)
       product.currentStock = Math.max(0, product.currentStock - qty);
       await product.save();
 
-      // Log Stock Transaction
       await StockTransaction.create({
         productId: product._id,
         transactionType: "SALE",
@@ -302,7 +353,6 @@ export async function billOrder(req: AuthedRequest, res: Response): Promise<void
 
     const appliedDiscount = discountPaise || 0;
     const finalTotalPaise = subtotalPaise + totalGstPaise - appliedDiscount;
-
     const billNumber = await generateBillNumber();
 
     const sale = new Sale({
@@ -313,18 +363,91 @@ export async function billOrder(req: AuthedRequest, res: Response): Promise<void
       discountPaise: appliedDiscount,
       totalGstPaise,
       totalPaise: finalTotalPaise,
-      paymentType: paymentType || "CASH",
+      paymentType: "CASH", // Placeholder until payment is strictly recorded
       status: "COMPLETED",
       createdBy: req.user!.userId,
     });
 
     await sale.save();
 
-    // Mark order as BILLED
-    order.status = "BILLED";
+    // Link Invoice & transition status
+    order.invoiceId = sale._id;
+    order.status = "PAYMENT_PENDING";
     await order.save();
+    await logAudit("BILL_CREATED", order._id, req.user!.userId, `Bill ${billNumber} created`);
 
-    res.status(201).json(sale);
+    res.status(201).json(order);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+/**
+ * 6. Record Payment
+ */
+export async function recordPayment(req: AuthedRequest, res: Response): Promise<void> {
+  try {
+    const { paymentMode, amountPaidPaise } = req.body;
+    
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      res.status(404).json({ message: "Order not found" });
+      return;
+    }
+
+    if (order.status !== "PAYMENT_PENDING") {
+      res.status(400).json({ message: "Order not in payment pending state." });
+      return;
+    }
+    if (!paymentMode) {
+      res.status(400).json({ message: "Payment mode required." });
+      return;
+    }
+
+    order.paymentStatus = "COMPLETED";
+    order.paymentMode = paymentMode;
+    order.amountPaidPaise = amountPaidPaise;
+    order.paymentReceivedAt = new Date();
+    order.status = "READY_FOR_HANDOVER";
+
+    // Also update the connected Sale's payment method
+    if (order.invoiceId) {
+      await Sale.findByIdAndUpdate(order.invoiceId, { paymentType: paymentMode });
+    }
+
+    await order.save();
+    await logAudit("PAYMENT_RECEIVED", order._id, req.user!.userId, `Payment completed via ${paymentMode}`);
+
+    res.status(200).json(order);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+/**
+ * 7. Complete Handover
+ */
+export async function completeHandover(req: AuthedRequest, res: Response): Promise<void> {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      res.status(404).json({ message: "Order not found" });
+      return;
+    }
+
+    if (order.status !== "READY_FOR_HANDOVER") {
+      res.status(400).json({ message: "Order not ready for handover." });
+      return;
+    }
+
+    order.handoverStatus = "COMPLETED";
+    order.handedOverAt = new Date();
+    order.status = "COMPLETED";
+
+    await order.save();
+    await logAudit("HANDOVER_COMPLETED", order._id, req.user!.userId, "Order completed and handed over");
+
+    res.status(200).json(order);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

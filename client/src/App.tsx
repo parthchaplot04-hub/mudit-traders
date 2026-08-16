@@ -18,8 +18,8 @@ import ReportsAudit from "./pages/Reports/ReportsAudit";
 import AppLayout from "./layouts/AppLayout";
 import OrdersList from "./pages/Orders/OrdersList";
 import CreateOrder from "./pages/Orders/CreateOrder";
-import OrderPicking from "./pages/Orders/OrderPicking";
-import OrderCheckout from "./pages/Orders/OrderCheckout";
+import OrderFulfilment from "./pages/Orders/OrderFulfilment";
+import OrderVerification from "./pages/Orders/OrderVerification";
 
 export default function App() {
   return (
@@ -40,8 +40,8 @@ export default function App() {
         {/* Orders Module */}
         <Route path="orders" element={<OrdersList />} />
         <Route path="orders/create" element={<CreateOrder />} />
-        <Route path="orders/:id/pick" element={<OrderPicking />} />
-        <Route path="orders/:id/checkout" element={<OrderCheckout />} />
+        <Route path="orders/:id/pick" element={<OrderFulfilment />} />
+        <Route path="orders/:id/checkout" element={<OrderVerification />} />
         
         {/* Reports Module */}
         <Route path="reports" element={<ReportsLayout />}>

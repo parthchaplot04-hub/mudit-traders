@@ -259,13 +259,23 @@ export default function CreateOrder() {
           <select
             value={selectedCustomerId}
             onChange={(e) => setSelectedCustomerId(e.target.value)}
-            className="w-full border border-slate-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full border border-slate-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-3"
           >
-            <option value="">Walk-in Customer (None)</option>
+            <option value="">Walk-in / New Customer</option>
             {customers.map(c => (
               <option key={c._id} value={c._id}>{c.name} ({c.phone})</option>
             ))}
           </select>
+          
+          {selectedCustomerId === "" && (
+            <div className="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-md">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">New Customer Details</p>
+              <input type="text" placeholder="Customer Name *" className="w-full text-sm border border-slate-300 rounded-md py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input type="text" placeholder="Mobile Number *" className="w-full text-sm border border-slate-300 rounded-md py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input type="text" placeholder="Address (Optional)" className="w-full text-sm border border-slate-300 rounded-md py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <p className="text-xs text-slate-400">If filled, a new customer will be automatically created on submit.</p>
+            </div>
+          )}
         </div>
 
         <div className="mb-4">
