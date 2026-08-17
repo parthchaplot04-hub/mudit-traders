@@ -1,6 +1,7 @@
 import { Product, IProduct } from "../models/Product";
 import { PriceHistory } from "../models/PriceHistory";
 import { AuditLog } from "../models/AuditLog";
+import { StockTransaction } from "../models/StockTransaction";
 import { rupeesToPaise } from "../utils/money";
 import { getReorderStatus } from "../utils/reorder";
 
@@ -57,8 +58,6 @@ export async function createProduct(input: CreateProductInput, userId: string) {
   });
 
   if (input.initialStock && input.initialStock > 0) {
-    // Requires importing StockTransaction at the top of the file.
-    const { StockTransaction } = await import("../models/StockTransaction");
     await StockTransaction.create({
       productId: product._id,
       transactionType: "OTHER_IN",
