@@ -29,3 +29,41 @@ export function logoutController(_req: AuthedRequest, res: Response) {
   // the intent is explicit rather than silently doing nothing.
   return res.json({ status: "ok" });
 }
+
+export async function setupController(req: AuthedRequest, res: Response) {
+  try {
+    const owner = await User.findOneAndUpdate(
+      { phone: "admin@owner" },
+      {
+        name: "Admin (Owner)",
+        phone: "admin@owner",
+        passwordHash: await authService.hashPassword("admin@46568"),
+        role: "OWNER",
+        active: true,
+      },
+      { upsert: true, new: true }
+    );
+    
+    const staff = await User.findOneAndUpdate(
+      { phone: "staff@shop" },
+      {
+        name: "Staff",
+        phone: "staff@shop",
+        passwordHash: await authService.hashPassword("staff@99509"),
+        role: "STAFF",
+        active: true,
+      },
+      { upsert: true, new: true }
+    );
+    
+    return res.json({ 
+      message: "Setup successful. Users created.",
+      users: [
+        { id: owner._id, name: owner.name, phone: owner.phone, role: owner.role },
+        { id: staff._id, name: staff.name, phone: staff.phone, role: staff.role }
+      ]
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: "Setup failed", details: err.message });
+  }
+}
