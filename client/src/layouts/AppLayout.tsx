@@ -58,9 +58,12 @@ export default function AppLayout() {
             </NavLink>
           ))}
         </nav>
+        <div className="px-5 pb-3 text-center opacity-40 hover:opacity-100 transition-opacity">
+          <span className="text-[10px] text-slate-300 uppercase tracking-[0.2em] font-medium">Nimish web services</span>
+        </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-5 py-4 text-sm text-slate-300 hover:bg-slate-800 border-t border-slate-800"
+          className="flex items-center gap-3 px-5 py-4 text-sm text-slate-300 hover:bg-slate-800 border-t border-slate-800 w-full text-left transition-colors"
         >
           <LogOut size={18} /> Logout
         </button>
@@ -95,9 +98,12 @@ export default function AppLayout() {
                 {item.label}
               </NavLink>
             ))}
+            <div className="px-3 pt-4 pb-2 text-center opacity-40">
+              <span className="text-[10px] text-slate-300 uppercase tracking-[0.2em] font-medium">Nimish web services</span>
+            </div>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-3 py-3 text-base text-slate-300"
+              className="w-full flex items-center gap-3 px-3 py-3 text-base text-slate-300 border-t border-slate-800"
             >
               <LogOut size={20} /> Logout
             </button>
