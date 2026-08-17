@@ -11,6 +11,7 @@ const allNavItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/pos", label: "Sales (POS)", icon: ShoppingCart },
   { to: "/customers", label: "Customers", icon: Users },
+  { to: "/credit", label: "Credit Ledger", icon: FileText },
   { to: "/products", label: "Products", icon: Package },
   { to: "/orders", label: "Orders (Large)", icon: ClipboardList },
   { to: "/purchases", label: "Purchases", icon: Truck, ownerOnly: true },

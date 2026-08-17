@@ -69,6 +69,7 @@ export default function App() {
         <Route path="products" element={<Products />} />
         <Route path="customers" element={<CustomersList />} />
         <Route path="customers/:id" element={<CustomerLedger />} />
+        <Route path="credit" element={<ReportsCredit />} />
         
         {/* Owner Only Routes */}
         <Route path="purchases" element={<OwnerRoute><Purchases /></OwnerRoute>} />
