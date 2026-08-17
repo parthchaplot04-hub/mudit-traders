@@ -16,7 +16,8 @@ const navItems = [
   { to: "/reorder", label: "Reorder", icon: RefreshCcw },
   { to: "/wastage", label: "Wastage", icon: Trash2 },
   { to: "/stocktake", label: "Stocktake", icon: ClipboardList },
-  { to: "/reports", label: "Reports", icon: FileText },
+  { to: "/expenses", label: "Expenses", icon: FileText },
+  { to: "/reports", label: "Reports", icon: LayoutDashboard },
 ];
 
 export default function AppLayout() {

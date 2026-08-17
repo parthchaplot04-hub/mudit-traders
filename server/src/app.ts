@@ -52,6 +52,7 @@ export function createApp() {
   app.use("/api/csv", csvRoutes);
   app.use("/api/reports", require("./routes/reportRoutes").default);
   app.use("/api/orders", require("./routes/orderRoutes").default);
+  app.use("/api/expenses", require("./routes/expenseRoutes").default);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
