@@ -50,6 +50,7 @@ export interface ISupplierLedgerEntry extends Document {
   type: SupplierLedgerEntryType;
   amountPaise: number; // positive = increases outstanding, negative = decreases
   referenceId?: Types.ObjectId; // Purchase._id or SupplierPayment._id
+  paymentMode?: string; // CASH, UPI, NEFT, CHEQUE, OTHER
   balanceAfterPaise: number;
   notes?: string;
   userId: Types.ObjectId;
@@ -62,6 +63,7 @@ const supplierLedgerEntrySchema = new Schema<ISupplierLedgerEntry>(
     type: { type: String, enum: ["PURCHASE", "PAYMENT", "ADJUSTMENT"], required: true },
     amountPaise: { type: Number, required: true },
     referenceId: { type: Schema.Types.ObjectId },
+    paymentMode: { type: String },
     balanceAfterPaise: { type: Number, required: true },
     notes: String,
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },

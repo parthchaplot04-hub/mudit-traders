@@ -40,6 +40,7 @@ export async function createSupplier(input: {
 export async function recordSupplierPayment(
   supplierId: string,
   amountRupees: number,
+  paymentMode: string,
   notes: string | undefined,
   userId: string
 ) {
@@ -60,6 +61,7 @@ export async function recordSupplierPayment(
             supplierId: supplier._id,
             type: "PAYMENT",
             amountPaise: -amountPaise,
+            paymentMode,
             balanceAfterPaise: supplier.currentOutstandingPaise,
             notes,
             userId,

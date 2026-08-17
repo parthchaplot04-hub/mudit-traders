@@ -38,6 +38,7 @@ export async function recordPayment(req: AuthedRequest, res: Response) {
     const result = await supplierService.recordSupplierPayment(
       req.params.id,
       parsed.data.amountRupees,
+      parsed.data.paymentMode,
       parsed.data.notes,
       req.user!.userId
     );

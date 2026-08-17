@@ -15,5 +15,6 @@ export const createSupplierSchema = z.object({
 
 export const supplierPaymentSchema = z.object({
   amountRupees: z.number().positive(),
+  paymentMode: z.enum(["CASH", "UPI", "NEFT", "CHEQUE", "OTHER"]),
   notes: z.string().optional(),
 });
