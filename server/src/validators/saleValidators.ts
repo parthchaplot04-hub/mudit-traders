@@ -18,6 +18,9 @@ export const createSaleSchema = z.object({
       amountPaise: z.number().nonnegative(),
     })
   ).min(1),
+}).refine(data => data.customerId || (data.customerName && data.customerName.trim().length > 0), {
+  message: "Customer name is mandatory for walk-in customers",
+  path: ["customerName"],
 });
 
 export const cancelSaleSchema = z.object({

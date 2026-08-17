@@ -118,6 +118,10 @@ export default function POS() {
       setMessage({ type: "error", text: "Select a customer for a credit sale." });
       return;
     }
+    if (!hasCredit && !customerName.trim()) {
+      setMessage({ type: "error", text: "Customer name is mandatory." });
+      return;
+    }
     if (payments.length === 0) {
       setMessage({ type: "error", text: "Please add at least one payment method." });
       return;
@@ -308,10 +312,10 @@ export default function POS() {
             </select>
           ) : (
             <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Walk-in Customer (Optional)</p>
+              <p className="text-sm font-medium text-slate-700">Walk-in Customer *</p>
               <input
                 type="text"
-                placeholder="Customer Name"
+                placeholder="Customer Name (Required)"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 className="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
