@@ -23,6 +23,8 @@ import OrdersList from "./pages/Orders/OrdersList";
 import CreateOrder from "./pages/Orders/CreateOrder";
 import OrderFulfilment from "./pages/Orders/OrderFulfilment";
 import OrderVerification from "./pages/Orders/OrderVerification";
+import CustomersList from "./pages/Customers/CustomersList";
+import CustomerLedger from "./pages/Customers/CustomerLedger";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -64,6 +66,8 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="pos" element={<POS />} />
         <Route path="products" element={<Products />} />
+        <Route path="customers" element={<CustomersList />} />
+        <Route path="customers/:id" element={<CustomerLedger />} />
         
         {/* Owner Only Routes */}
         <Route path="purchases" element={<OwnerRoute><Purchases /></OwnerRoute>} />

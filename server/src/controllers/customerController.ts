@@ -7,6 +7,8 @@ import { rupeesToPaise } from "../utils/money";
 const createCustomerSchema = z.object({
   name: z.string().min(1),
   phone: z.string().optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  aadharNumber: z.string().optional(),
   address: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -23,6 +25,12 @@ export async function createCustomer(req: AuthedRequest, res: Response) {
   }
   const customer = await Customer.create(parsed.data);
   return res.status(201).json({ customer });
+}
+
+export async function getCustomer(req: AuthedRequest, res: Response) {
+  const customer = await Customer.findById(req.params.id);
+  if (!customer) return res.status(404).json({ error: "Customer not found" });
+  return res.json({ customer });
 }
 
 export async function getCustomerLedger(req: AuthedRequest, res: Response) {

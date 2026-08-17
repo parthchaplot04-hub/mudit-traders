@@ -4,6 +4,8 @@ export interface ICustomer extends Document {
   _id: Types.ObjectId;
   name: string;
   phone?: string;
+  email?: string;
+  aadharNumber?: string;
   address?: string;
   outstandingPaise: number;
   active: boolean;
@@ -16,6 +18,8 @@ const customerSchema = new Schema<ICustomer>(
   {
     name: { type: String, required: true, trim: true, index: true },
     phone: { type: String, trim: true },
+    email: { type: String, trim: true },
+    aadharNumber: { type: String, trim: true },
     address: String,
     outstandingPaise: { type: Number, default: 0 },
     active: { type: Boolean, default: true },

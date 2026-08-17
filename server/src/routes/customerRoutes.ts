@@ -7,6 +7,7 @@ router.use(requireAuth);
 
 router.get("/", customerController.listCustomers);
 router.post("/", customerController.createCustomer);
+router.get("/:id", customerController.getCustomer);
 router.get("/:id/ledger", customerController.getCustomerLedger);
 router.post("/:id/payments", customerController.recordCustomerPayment);
 
