@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { createApp } from "../server/src/app";
 import { connectDB } from "../server/src/config/db";
 import mongoose from "mongoose";
+import "../server/src/models/StockTransaction"; // Force vercel to bundle this file
 
 let isConnected = false;
 const app = createApp();

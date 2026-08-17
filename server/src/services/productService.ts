@@ -1,7 +1,7 @@
 import { Product, IProduct } from "../models/Product";
 import { PriceHistory } from "../models/PriceHistory";
 import { AuditLog } from "../models/AuditLog";
-import { StockTransaction } from "../models/StockTransaction";
+import mongoose from "mongoose";
 import { rupeesToPaise } from "../utils/money";
 import { getReorderStatus } from "../utils/reorder";
 
@@ -58,6 +58,7 @@ export async function createProduct(input: CreateProductInput, userId: string) {
   });
 
   if (input.initialStock && input.initialStock > 0) {
+    const StockTransaction = mongoose.model("StockTransaction");
     await StockTransaction.create({
       productId: product._id,
       transactionType: "OTHER_IN",
