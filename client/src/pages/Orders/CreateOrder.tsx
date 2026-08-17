@@ -20,7 +20,9 @@ type OrderItem = {
   productName: string;
   salesUnit: string;
   orderedQuantity: number;
+  orderedQuantityRaw?: string;
   unitPricePaise: number;
+  targetPriceRaw?: string;
   gstRate: number;
   notes: string;
 };
@@ -97,7 +99,7 @@ export default function CreateOrder() {
     setItems(prev => prev.map(i => {
       if (i.productId === id) {
         const newQ = i.orderedQuantity + delta;
-        return { ...i, orderedQuantity: newQ > 0 ? newQ : 0 };
+        return { ...i, orderedQuantity: newQ > 0 ? newQ : 0, orderedQuantityRaw: undefined, targetPriceRaw: undefined };
       }
       return i;
     }));
@@ -213,10 +215,16 @@ export default function CreateOrder() {
                           <button onClick={() => updateQuantity(item.productId, -1)} className="p-1 bg-slate-100 rounded hover:bg-slate-200 text-slate-600"><Minus size={16}/></button>
                           <input 
                             type="number" step="any" min="0"
-                            value={item.orderedQuantity === 0 ? '' : item.orderedQuantity}
+                            value={item.orderedQuantityRaw !== undefined ? item.orderedQuantityRaw : (item.orderedQuantity === 0 ? '' : item.orderedQuantity)}
                             onChange={(e) => {
-                              const val = parseFloat(e.target.value);
-                              setItems(prev => prev.map(i => i.productId === item.productId ? { ...i, orderedQuantity: isNaN(val) ? 0 : val } : i));
+                              const rawVal = e.target.value;
+                              const val = parseFloat(rawVal);
+                              setItems(prev => prev.map(i => i.productId === item.productId ? { 
+                                ...i, 
+                                orderedQuantity: isNaN(val) ? 0 : val, 
+                                orderedQuantityRaw: rawVal, 
+                                targetPriceRaw: undefined 
+                              } : i));
                             }}
                             className="w-16 text-center border border-slate-200 rounded py-1 focus:outline-none focus:border-emerald-500 font-medium"
                           />
@@ -227,14 +235,25 @@ export default function CreateOrder() {
                       <td className="p-3 text-center">
                         <input
                           type="number" step="any" min="0" placeholder="₹"
-                          value={item.orderedQuantity === 0 ? '' : +(item.orderedQuantity * item.unitPricePaise / 100).toFixed(2)}
+                          value={item.targetPriceRaw !== undefined ? item.targetPriceRaw : (item.orderedQuantity === 0 ? '' : +(item.orderedQuantity * item.unitPricePaise / 100).toFixed(2))}
                           onChange={(e) => {
-                            const targetRs = parseFloat(e.target.value);
+                            const rawVal = e.target.value;
+                            const targetRs = parseFloat(rawVal);
                             if (!isNaN(targetRs) && targetRs >= 0) {
                               const calculatedQty = parseFloat((targetRs / (item.unitPricePaise / 100)).toFixed(3));
-                              setItems(prev => prev.map(i => i.productId === item.productId ? { ...i, orderedQuantity: calculatedQty } : i));
-                            } else if (e.target.value === '') {
-                              setItems(prev => prev.map(i => i.productId === item.productId ? { ...i, orderedQuantity: 0 } : i));
+                              setItems(prev => prev.map(i => i.productId === item.productId ? { 
+                                ...i, 
+                                orderedQuantity: calculatedQty, 
+                                targetPriceRaw: rawVal, 
+                                orderedQuantityRaw: undefined 
+                              } : i));
+                            } else {
+                              setItems(prev => prev.map(i => i.productId === item.productId ? { 
+                                ...i, 
+                                orderedQuantity: 0, 
+                                targetPriceRaw: rawVal, 
+                                orderedQuantityRaw: undefined 
+                              } : i));
                             }
                           }}
                           className="w-20 text-center border border-slate-200 rounded py-1 focus:outline-none focus:border-emerald-500 font-medium text-emerald-700 bg-emerald-50"
