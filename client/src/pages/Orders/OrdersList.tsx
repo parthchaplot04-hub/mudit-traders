@@ -130,7 +130,7 @@ export default function OrdersList() {
                     <td className="px-6 py-4 font-mono font-bold text-slate-800">{order.orderNumber}</td>
                     <td className="px-6 py-4">{format(new Date(order.createdAt), "dd MMM, p")}</td>
                     <td className="px-6 py-4 font-medium text-slate-700">
-                      {order.customerId?.name || "Walk-in Customer"}
+                      {order.customerId?.name || order.customerName || "Walk-in Customer"}
                     </td>
                     <td className="px-6 py-4 text-center font-medium">{order.items.length}</td>
                     <td className="px-6 py-4">

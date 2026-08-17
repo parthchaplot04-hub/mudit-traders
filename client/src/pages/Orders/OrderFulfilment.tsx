@@ -89,7 +89,7 @@ export default function OrderFulfilment() {
         </button>
         <div>
           <h1 className="text-xl font-bold text-slate-800">{order.orderNumber}</h1>
-          <p className="text-sm text-slate-500">{order.customerId?.name || "Walk-in"}</p>
+          <p className="text-sm text-slate-500">{order.customerId?.name || order.customerName || "Walk-in"}</p>
         </div>
       </div>
 

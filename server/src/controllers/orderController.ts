@@ -6,6 +6,7 @@ import { Counter } from "../models/Counter";
 import { Sale } from "../models/Sale";
 import { StockTransaction } from "../models/StockTransaction";
 import { AuditLog } from "../models/AuditLog";
+import { Customer } from "../models/Customer";
 
 async function generateOrderNumber(): Promise<string> {
   const counter = await Counter.findOneAndUpdate(
@@ -82,11 +83,32 @@ export async function getOrderById(req: AuthedRequest, res: Response): Promise<v
 
 export async function createOrder(req: AuthedRequest, res: Response): Promise<void> {
   try {
-    const { customerId, items, notes } = req.body;
+    const { customerId, customerName, customerPhone, customerAddress, items, notes } = req.body;
     
     if (!items || items.length === 0) {
       res.status(400).json({ message: "Order must have at least one item." });
       return;
+    }
+
+    if (!customerId && (!customerName || !customerName.trim())) {
+      res.status(400).json({ message: "Customer Name is required for walk-in orders." });
+      return;
+    }
+
+    let finalCustomerId = customerId;
+    let finalCustomerName = customerName;
+    let finalCustomerPhone = customerPhone;
+
+    // Auto-create customer if details provided
+    if (!customerId && customerName && customerName.trim()) {
+      const newCustomer = await Customer.create({
+        name: customerName.trim(),
+        phone: customerPhone?.trim() || undefined,
+        address: customerAddress?.trim() || undefined,
+      });
+      finalCustomerId = newCustomer._id;
+      finalCustomerName = newCustomer.name;
+      finalCustomerPhone = newCustomer.phone;
     }
 
     const productIds = items.map((i: any) => i.productId);
@@ -113,7 +135,9 @@ export async function createOrder(req: AuthedRequest, res: Response): Promise<vo
 
     const newOrder = new Order({
       orderNumber,
-      customerId: customerId || undefined,
+      customerId: finalCustomerId || undefined,
+      customerName: finalCustomerName?.trim() || undefined,
+      customerPhone: finalCustomerPhone?.trim() || undefined,
       items: orderItems,
       notes,
       status: "WAITING_FOR_STAFF",

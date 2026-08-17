@@ -57,6 +57,8 @@ export interface IOrder extends Document {
   _id: Types.ObjectId;
   orderNumber: string;
   customerId?: Types.ObjectId;
+  customerName?: string;
+  customerPhone?: string;
   status: OrderStatus;
   items: IOrderItem[];
   notes?: string;
@@ -80,6 +82,8 @@ const orderSchema = new Schema<IOrder>(
   {
     orderNumber: { type: String, required: true, unique: true },
     customerId: { type: Schema.Types.ObjectId, ref: "Customer" },
+    customerName: { type: String },
+    customerPhone: { type: String },
     status: {
       type: String,
       enum: [

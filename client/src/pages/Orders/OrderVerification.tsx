@@ -129,7 +129,7 @@ export default function OrderVerification() {
         </button>
         <div>
           <h1 className="text-xl font-bold text-slate-800">Verification & Fulfillment: {order.orderNumber}</h1>
-          <p className="text-sm text-slate-500">Customer: {order.customerId?.name || "Walk-in"} | Phone: {order.customerId?.phone || "N/A"}</p>
+          <p className="text-sm text-slate-500">Customer: {order.customerId?.name || order.customerName || "Walk-in"} | Phone: {order.customerId?.phone || order.customerPhone || "N/A"}</p>
         </div>
       </div>
 
@@ -210,7 +210,7 @@ export default function OrderVerification() {
 
               <div className="mb-6">
                 <h3 className="font-bold text-slate-800">Bill To:</h3>
-                <p>{order.customerId?.name || "Walk-in Customer"}</p>
+                <p>{order.customerId?.name || order.customerName || "Walk-in Customer"}</p>
                 {order.customerId?.phone && <p>Phone: {order.customerId.phone}</p>}
                 {order.customerId?.address && <p>{order.customerId.address}</p>}
               </div>

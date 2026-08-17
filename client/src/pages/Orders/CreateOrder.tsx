@@ -36,6 +36,9 @@ export default function CreateOrder() {
   const [items, setItems] = useState<OrderItem[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -119,10 +122,18 @@ export default function CreateOrder() {
       return;
     }
 
+    if (!selectedCustomerId && !customerName.trim()) {
+      toast.error("Customer Name is mandatory for Walk-in Orders.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       await axios.post("/api/orders", {
         customerId: selectedCustomerId || undefined,
+        customerName,
+        customerPhone,
+        customerAddress,
         items,
         notes
       }, { withCredentials: true });
@@ -304,9 +315,27 @@ export default function CreateOrder() {
           {selectedCustomerId === "" && (
             <div className="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-md">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">New Customer Details</p>
-              <input type="text" placeholder="Customer Name *" className="w-full text-sm border border-slate-300 rounded-md py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              <input type="text" placeholder="Mobile Number *" className="w-full text-sm border border-slate-300 rounded-md py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              <input type="text" placeholder="Address (Optional)" className="w-full text-sm border border-slate-300 rounded-md py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input 
+                type="text" 
+                placeholder="Customer Name *" 
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full text-sm border border-slate-300 rounded-md py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+              />
+              <input 
+                type="text" 
+                placeholder="Mobile Number *" 
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="w-full text-sm border border-slate-300 rounded-md py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+              />
+              <input 
+                type="text" 
+                placeholder="Address (Optional)" 
+                value={customerAddress}
+                onChange={(e) => setCustomerAddress(e.target.value)}
+                className="w-full text-sm border border-slate-300 rounded-md py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+              />
               <p className="text-xs text-slate-400">If filled, a new customer will be automatically created on submit.</p>
             </div>
           )}
