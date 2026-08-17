@@ -32,9 +32,19 @@ export function Invoice({ sale, customerName }: { sale: any; customerName?: stri
           <h2 className="text-2xl font-semibold text-slate-800 uppercase tracking-widest">
             TAX INVOICE
           </h2>
+          <div className="mt-4 flex justify-between text-xs sm:text-sm">
+            <div>
+              <p><span className="font-semibold">Bill No:</span> {sale.billNumber}</p>
+              <p><span className="font-semibold">Date:</span> {date}</p>
+            </div>
+            {(customerName || sale.customerName) && (
+              <div className="text-right ml-4">
+                <p><span className="font-semibold">Customer:</span> {customerName || sale.customerName}</p>
+                {sale.customerPhone && <p><span className="font-semibold">Phone:</span> {sale.customerPhone}</p>}
+              </div>
+            )}
+          </div>
           <div className="mt-2 text-sm text-slate-600">
-            <p><span className="font-semibold">Bill No:</span> {sale.billNumber}</p>
-            <p><span className="font-semibold">Date:</span> {date}</p>
             <p><span className="font-semibold">Payment:</span> {sale.payments && sale.payments.length > 0 ? sale.payments.map((p: any) => `${p.method} (₹${(p.amountPaise / 100).toFixed(2)})`).join(', ') : sale.paymentType}</p>
           </div>
         </div>

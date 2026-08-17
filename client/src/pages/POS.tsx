@@ -19,6 +19,8 @@ export default function POS() {
   const [currentPaymentMode, setCurrentPaymentMode] = useState<PaymentType>("CASH");
   const [currentPaymentAmount, setCurrentPaymentAmount] = useState<number | "">("");
   const [customerId, setCustomerId] = useState<string>("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [lastBill, setLastBill] = useState<any>(null);
 
@@ -85,6 +87,8 @@ export default function POS() {
     mutationFn: async () => {
       const payload = {
         customerId: hasCredit ? customerId : undefined,
+        customerName: customerName.trim() || undefined,
+        customerPhone: customerPhone.trim() || undefined,
         items: cart.map((l) => ({ productId: l.product._id, quantity: l.quantity })),
         discountRupees,
         payments: payments.map(p => ({ method: p.method, amountPaise: Math.round(p.amount * 100) })),
@@ -98,6 +102,8 @@ export default function POS() {
       setDiscountRupees(0);
       setPayments([]);
       setCustomerId("");
+      setCustomerName("");
+      setCustomerPhone("");
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onError: (err) => {
@@ -289,17 +295,35 @@ export default function POS() {
             </div>
           </div>
 
-          {hasCredit && (
+          {hasCredit ? (
             <select
               value={customerId}
               onChange={(e) => setCustomerId(e.target.value)}
               className="w-full border border-slate-300 rounded-lg py-2.5 px-3"
             >
-              <option value="">Select customer...</option>
+              <option value="">Select ledger customer...</option>
               {customers?.items.map((c) => (
                 <option key={c._id} value={c._id}>{c.name}</option>
               ))}
             </select>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-slate-700">Walk-in Customer (Optional)</p>
+              <input
+                type="text"
+                placeholder="Customer Name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+              <input
+                type="tel"
+                placeholder="Mobile Number"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+            </div>
           )}
 
           {message && (

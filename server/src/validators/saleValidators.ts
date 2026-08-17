@@ -8,6 +8,8 @@ export const saleItemInputSchema = z.object({
 
 export const createSaleSchema = z.object({
   customerId: z.string().optional(),
+  customerName: z.string().optional(),
+  customerPhone: z.string().optional(),
   items: z.array(saleItemInputSchema).min(1),
   discountRupees: z.number().nonnegative().default(0),
   payments: z.array(

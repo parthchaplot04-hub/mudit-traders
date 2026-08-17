@@ -47,6 +47,8 @@ export interface ISale extends Document {
   _id: Types.ObjectId;
   billNumber: string;
   customerId?: Types.ObjectId;
+  customerName?: string;
+  customerPhone?: string;
   items: ISaleItem[];
   subtotalPaise: number;
   discountPaise: number;
@@ -65,6 +67,8 @@ const saleSchema = new Schema<ISale>(
   {
     billNumber: { type: String, required: true, unique: true },
     customerId: { type: Schema.Types.ObjectId, ref: "Customer" },
+    customerName: { type: String },
+    customerPhone: { type: String },
     items: { type: [saleItemSchema], required: true, validate: (v: unknown[]) => v.length > 0 },
     subtotalPaise: { type: Number, required: true },
     discountPaise: { type: Number, required: true, default: 0 },

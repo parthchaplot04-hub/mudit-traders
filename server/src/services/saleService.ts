@@ -22,6 +22,8 @@ interface CreateSaleItemInput {
 
 interface CreateSaleInput {
   customerId?: string;
+  customerName?: string;
+  customerPhone?: string;
   items: CreateSaleItemInput[];
   discountRupees: number;
   payments: { method: "CASH" | "UPI" | "CHEQUE" | "CREDIT" | "OTHER"; amountPaise: number }[];
@@ -150,6 +152,8 @@ export async function createSale(input: CreateSaleInput, userId: string) {
             _id: saleId,
             billNumber,
             customerId: input.customerId,
+            customerName: input.customerName,
+            customerPhone: input.customerPhone,
             items,
             subtotalPaise,
             discountPaise,
