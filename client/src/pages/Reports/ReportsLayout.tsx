@@ -20,6 +20,7 @@ export default function ReportsLayout() {
     { name: "Purchases", path: "/reports/purchases" },
     { name: "Stock Movement", path: "/reports/stock" },
     { name: "Profit & Loss", path: "/reports/profit" },
+    { name: "Credit Ledger", path: "/reports/credit" },
     { name: "All Transactions", path: "/reports/transactions" },
     { name: "Audit Log", path: "/reports/audit" }
   ];

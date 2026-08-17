@@ -13,6 +13,7 @@ import ReportsLayout from "./pages/Reports/ReportsLayout";
 import ReportsOverview from "./pages/Reports/ReportsOverview";
 import ReportsSales from "./pages/Reports/ReportsSales";
 import ReportsPurchases from "./pages/Reports/ReportsPurchases";
+import ReportsCredit from "./pages/Reports/ReportsCredit";
 import ReportsStock from "./pages/Reports/ReportsStock";
 import ReportsProfit from "./pages/Reports/ReportsProfit";
 import ReportsUnifiedTimeline from "./pages/Reports/ReportsUnifiedTimeline";
@@ -89,6 +90,7 @@ export default function App() {
           <Route index element={<ReportsOverview />} />
           <Route path="sales" element={<ReportsSales />} />
           <Route path="purchases" element={<ReportsPurchases />} />
+          <Route path="credit" element={<ReportsCredit />} />
           <Route path="stock" element={<ReportsStock />} />
           <Route path="profit" element={<ReportsProfit />} />
           <Route path="transactions" element={<ReportsUnifiedTimeline />} />
