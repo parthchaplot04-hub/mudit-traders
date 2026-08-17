@@ -70,3 +70,13 @@ export async function deactivateProduct(req: AuthedRequest, res: Response) {
     return res.status(err.status || 500).json({ error: err.message });
   }
 }
+
+export async function deleteProduct(req: AuthedRequest, res: Response) {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) return res.status(404).json({ error: "Product not found" });
+    return res.json({ message: "Product deleted" });
+  } catch (err: any) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+}

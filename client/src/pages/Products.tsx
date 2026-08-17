@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { Search, Plus, X, Edit2 } from "lucide-react";
+import { Search, Plus, X, Edit2, Trash2 } from "lucide-react";
 import { api, getApiErrorMessage } from "../lib/api";
 import { formatPaise } from "../utils/format";
 import type { Product } from "../types";
@@ -66,6 +66,18 @@ export default function Products() {
       }
     },
     onError: (err) => setFormError(getApiErrorMessage(err)),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return (await api.delete(`/products/${id}`)).data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (err) => {
+      alert("Could not delete product: " + getApiErrorMessage(err));
+    },
   });
 
   return (
@@ -142,33 +154,47 @@ export default function Products() {
                 </td>
                 <td className="px-4 py-3 text-right">
                   {isOwner && (
-                    <button
-                      onClick={() => {
-                        setEditingProduct(p);
-                        reset({
-                          productCode: p.productCode,
-                          productName: p.productName,
-                          hindiName: p.hindiName || "",
-                          category: p.category,
-                          stockUnit: p.stockUnit,
-                          purchaseUnit: p.purchaseUnit,
-                          salesUnit: p.salesUnit,
-                          conversionFactor: p.conversionFactor,
-                          sellingPriceRupees: p.sellingPricePaise / 100,
-                          purchaseCostRupees: p.purchaseCostPaise / 100,
-                          gstRate: p.gstRate,
-                          reorderLevel: p.reorderLevel,
-                          reorderQuantity: p.reorderQuantity,
-                          initialStock: undefined,
-                        });
-                        setFormError(null);
-                        setFormSuccess(null);
-                        setShowForm(true);
-                      }}
-                      className="text-slate-400 hover:text-emerald-600 transition-colors p-1"
-                    >
-                      <Edit2 size={16} />
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingProduct(p);
+                          reset({
+                            productCode: p.productCode,
+                            productName: p.productName,
+                            hindiName: p.hindiName || "",
+                            category: p.category,
+                            stockUnit: p.stockUnit,
+                            purchaseUnit: p.purchaseUnit,
+                            salesUnit: p.salesUnit,
+                            conversionFactor: p.conversionFactor,
+                            sellingPriceRupees: p.sellingPricePaise / 100,
+                            purchaseCostRupees: p.purchaseCostPaise / 100,
+                            gstRate: p.gstRate,
+                            reorderLevel: p.reorderLevel,
+                            reorderQuantity: p.reorderQuantity,
+                            initialStock: undefined,
+                          });
+                          setFormError(null);
+                          setFormSuccess(null);
+                          setShowForm(true);
+                        }}
+                        className="text-slate-400 hover:text-emerald-600 transition-colors p-1"
+                        title="Edit Product"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Are you sure you want to completely delete "${p.productName}"?`)) {
+                            deleteMutation.mutate(p._id);
+                          }
+                        }}
+                        className="text-slate-400 hover:text-red-600 transition-colors p-1"
+                        title="Delete Product"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>
