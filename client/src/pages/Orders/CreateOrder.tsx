@@ -97,7 +97,7 @@ export default function CreateOrder() {
     setItems(prev => prev.map(i => {
       if (i.productId === id) {
         const newQ = i.orderedQuantity + delta;
-        return { ...i, orderedQuantity: newQ > 0 ? newQ : 0.001 };
+        return { ...i, orderedQuantity: newQ > 0 ? newQ : 0 };
       }
       return i;
     }));
@@ -187,7 +187,8 @@ export default function CreateOrder() {
               <thead className="bg-slate-100 text-slate-600 text-sm sticky top-0 shadow-sm z-0">
                 <tr>
                   <th className="p-3 font-semibold w-1/3">Product</th>
-                  <th className="p-3 font-semibold text-center w-1/4">Order Qty</th>
+                  <th className="p-3 font-semibold text-center w-auto">Order Qty</th>
+                  <th className="p-3 font-semibold text-center w-24">Target ₹</th>
                   <th className="p-3 font-semibold w-1/4">Picking Notes</th>
                   <th className="p-3 font-semibold text-right">Action</th>
                 </tr>
@@ -195,7 +196,7 @@ export default function CreateOrder() {
               <tbody className="divide-y divide-slate-100">
                 {items.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="p-12 text-center text-slate-400">
+                    <td colSpan={5} className="p-12 text-center text-slate-400">
                       <ShoppingBag className="mx-auto h-12 w-12 text-slate-200 mb-2" />
                       <p>Search and select products to build the order.</p>
                     </td>
@@ -211,19 +212,33 @@ export default function CreateOrder() {
                         <div className="flex items-center justify-center gap-2">
                           <button onClick={() => updateQuantity(item.productId, -1)} className="p-1 bg-slate-100 rounded hover:bg-slate-200 text-slate-600"><Minus size={16}/></button>
                           <input 
-                            type="number"
-                            value={item.orderedQuantity}
+                            type="number" step="any" min="0"
+                            value={item.orderedQuantity === 0 ? '' : item.orderedQuantity}
                             onChange={(e) => {
                               const val = parseFloat(e.target.value);
-                              if (!isNaN(val) && val > 0) {
-                                setItems(prev => prev.map(i => i.productId === item.productId ? { ...i, orderedQuantity: val } : i));
-                              }
+                              setItems(prev => prev.map(i => i.productId === item.productId ? { ...i, orderedQuantity: isNaN(val) ? 0 : val } : i));
                             }}
                             className="w-16 text-center border border-slate-200 rounded py-1 focus:outline-none focus:border-emerald-500 font-medium"
                           />
                           <span className="text-xs text-slate-500 w-6 text-left">{item.salesUnit}</span>
                           <button onClick={() => updateQuantity(item.productId, 1)} className="p-1 bg-slate-100 rounded hover:bg-slate-200 text-slate-600"><Plus size={16}/></button>
                         </div>
+                      </td>
+                      <td className="p-3 text-center">
+                        <input
+                          type="number" step="any" min="0" placeholder="₹"
+                          value={item.orderedQuantity === 0 ? '' : +(item.orderedQuantity * item.unitPricePaise / 100).toFixed(2)}
+                          onChange={(e) => {
+                            const targetRs = parseFloat(e.target.value);
+                            if (!isNaN(targetRs) && targetRs >= 0) {
+                              const calculatedQty = parseFloat((targetRs / (item.unitPricePaise / 100)).toFixed(3));
+                              setItems(prev => prev.map(i => i.productId === item.productId ? { ...i, orderedQuantity: calculatedQty } : i));
+                            } else if (e.target.value === '') {
+                              setItems(prev => prev.map(i => i.productId === item.productId ? { ...i, orderedQuantity: 0 } : i));
+                            }
+                          }}
+                          className="w-20 text-center border border-slate-200 rounded py-1 focus:outline-none focus:border-emerald-500 font-medium text-emerald-700 bg-emerald-50"
+                        />
                       </td>
                       <td className="p-3">
                         <input
