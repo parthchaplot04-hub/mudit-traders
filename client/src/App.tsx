@@ -1,4 +1,6 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "./hooks/useAuth";
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import POS from "./pages/POS";
 import Products from "./pages/Products";
@@ -22,12 +24,33 @@ import CreateOrder from "./pages/Orders/CreateOrder";
 import OrderFulfilment from "./pages/Orders/OrderFulfilment";
 import OrderVerification from "./pages/Orders/OrderVerification";
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return <div className="h-screen w-screen flex items-center justify-center bg-slate-50 text-slate-400">Loading...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <Routes>
+      <Route path="/login" element={<Login />} />
+      
       <Route
         path="/"
-        element={<AppLayout />}
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
       >
         <Route index element={<Dashboard />} />
         <Route path="pos" element={<POS />} />

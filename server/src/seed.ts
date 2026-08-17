@@ -37,22 +37,22 @@ async function seed() {
 
   console.log("[seed] Creating users (skips if phone already exists)...");
   const owner = await User.findOneAndUpdate(
-    { phone: "9999900001" },
+    { phone: "admin@owner" },
     {
-      name: "Owner (Father)",
-      phone: "9999900001",
-      passwordHash: await hashPassword("owner123"),
+      name: "Admin (Owner)",
+      phone: "admin@owner",
+      passwordHash: await hashPassword("admin@46568"),
       role: "OWNER",
       active: true,
     },
     { upsert: true, new: true }
   );
   await User.findOneAndUpdate(
-    { phone: "9999900002" },
+    { phone: "staff@shop" },
     {
-      name: "Staff 1",
-      phone: "9999900002",
-      passwordHash: await hashPassword("staff123"),
+      name: "Staff",
+      phone: "staff@shop",
+      passwordHash: await hashPassword("staff@99509"),
       role: "STAFF",
       active: true,
     },
@@ -200,9 +200,9 @@ async function seed() {
   ]);
 
   console.log("[seed] Done.");
-  console.log("[seed] Owner login  -> phone: 9999900001  password: owner123");
-  console.log("[seed] Staff login  -> phone: 9999900002  password: staff123");
-  console.log("[seed] CHANGE THESE PASSWORDS before real use.");
+  console.log("[seed] Owner login  -> phone: admin@owner  password: admin@46568");
+  console.log("[seed] Staff login  -> phone: staff@shop  password: staff@99509");
+  console.log("[seed] READY for use.");
 
   await disconnectDB();
 }
