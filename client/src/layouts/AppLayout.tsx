@@ -6,22 +6,24 @@ import {
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 
-const navItems = [
+const allNavItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/pos", label: "Sales (POS)", icon: ShoppingCart },
   { to: "/products", label: "Products", icon: Package },
   { to: "/orders", label: "Orders (Large)", icon: ClipboardList },
-  { to: "/purchases", label: "Purchases", icon: Truck },
-  { to: "/suppliers", label: "Suppliers", icon: Building2 },
+  { to: "/purchases", label: "Purchases", icon: Truck, ownerOnly: true },
+  { to: "/suppliers", label: "Suppliers", icon: Building2, ownerOnly: true },
   { to: "/reorder", label: "Reorder", icon: RefreshCcw },
   { to: "/wastage", label: "Wastage", icon: Trash2 },
   { to: "/stocktake", label: "Stocktake", icon: ClipboardList },
-  { to: "/expenses", label: "Expenses", icon: FileText },
-  { to: "/reports", label: "Reports", icon: LayoutDashboard },
+  { to: "/expenses", label: "Expenses", icon: FileText, ownerOnly: true },
+  { to: "/reports", label: "Reports", icon: LayoutDashboard, ownerOnly: true },
 ];
 
 export default function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, isOwner } = useAuth();
+  
+  const navItems = allNavItems.filter(item => isOwner || !item.ownerOnly);
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 

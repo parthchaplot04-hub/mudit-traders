@@ -39,6 +39,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function OwnerRoute({ children }: { children: React.ReactNode }) {
+  const { isOwner, isLoading } = useAuth();
+  
+  if (isLoading) return null;
+  if (!isOwner) return <Navigate to="/" replace />;
+  
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <Routes>
@@ -55,12 +64,15 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="pos" element={<POS />} />
         <Route path="products" element={<Products />} />
-        <Route path="purchases" element={<Purchases />} />
-        <Route path="suppliers" element={<Suppliers />} />
+        
+        {/* Owner Only Routes */}
+        <Route path="purchases" element={<OwnerRoute><Purchases /></OwnerRoute>} />
+        <Route path="suppliers" element={<OwnerRoute><Suppliers /></OwnerRoute>} />
+        <Route path="expenses" element={<OwnerRoute><Expenses /></OwnerRoute>} />
+        
         <Route path="reorder" element={<Reorder />} />
         <Route path="wastage" element={<Wastage />} />
         <Route path="stocktake" element={<Stocktake />} />
-        <Route path="expenses" element={<Expenses />} />
         
         {/* Orders Module */}
         <Route path="orders" element={<OrdersList />} />
@@ -68,8 +80,8 @@ export default function App() {
         <Route path="orders/:id/pick" element={<OrderFulfilment />} />
         <Route path="orders/:id/checkout" element={<OrderVerification />} />
         
-        {/* Reports Module */}
-        <Route path="reports" element={<ReportsLayout />}>
+        {/* Reports Module - Owner Only */}
+        <Route path="reports" element={<OwnerRoute><ReportsLayout /></OwnerRoute>}>
           <Route index element={<ReportsOverview />} />
           <Route path="sales" element={<ReportsSales />} />
           <Route path="purchases" element={<ReportsPurchases />} />
