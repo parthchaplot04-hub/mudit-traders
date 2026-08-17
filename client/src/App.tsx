@@ -3,6 +3,7 @@ import { useAuth } from "./hooks/useAuth";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import POS from "./pages/POS";
+import SalesHistory from "./pages/SalesHistory";
 import Products from "./pages/Products";
 import Purchases from "./pages/Purchases";
 import Suppliers from "./pages/Suppliers";
@@ -66,6 +67,7 @@ export default function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="pos" element={<POS />} />
+        <Route path="sales-history" element={<SalesHistory />} />
         <Route path="products" element={<Products />} />
         <Route path="customers" element={<CustomersList />} />
         <Route path="customers/:id" element={<CustomerLedger />} />

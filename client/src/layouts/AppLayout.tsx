@@ -10,6 +10,7 @@ import { useAuth } from "../hooks/useAuth";
 const allNavItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/pos", label: "Sales (POS)", icon: ShoppingCart },
+  { to: "/sales-history", label: "Sales History", icon: FileText },
   { to: "/customers", label: "Customers", icon: Users },
   { to: "/credit", label: "Credit Ledger", icon: FileText },
   { to: "/products", label: "Products", icon: Package },

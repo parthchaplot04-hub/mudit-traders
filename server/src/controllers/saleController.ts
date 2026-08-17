@@ -25,7 +25,12 @@ export async function listSales(req: AuthedRequest, res: Response) {
   if (req.query.paymentType) filter.paymentType = req.query.paymentType;
 
   const [items, total] = await Promise.all([
-    Sale.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+    Sale.find(filter)
+      .populate("customerId", "name phone")
+      .populate("createdBy", "name")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
     Sale.countDocuments(filter),
   ]);
   return res.json({ items, page, limit, total, totalPages: Math.ceil(total / limit) });
