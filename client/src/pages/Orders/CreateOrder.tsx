@@ -148,10 +148,10 @@ export default function CreateOrder() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] max-w-7xl mx-auto p-4 gap-6">
+    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-8rem)] lg:h-[calc(100vh-4rem)] max-w-7xl mx-auto p-0 sm:p-4 gap-6">
       
       {/* LEFT: Order Entry */}
-      <div className="w-2/3 flex flex-col gap-4">
+      <div className="w-full lg:w-2/3 flex flex-col gap-4">
         <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
           <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
             <ShoppingBag size={20} className="text-emerald-600"/> Create Large Order
@@ -172,7 +172,7 @@ export default function CreateOrder() {
 
           {/* Search Results Dropdown */}
           {products.length > 0 && (
-            <div className="absolute z-10 w-[calc(66%-2rem)] max-w-3xl bg-white border border-slate-200 rounded-lg shadow-xl max-h-96 overflow-y-auto mt-1">
+            <div className="absolute z-10 w-[calc(100%-2rem)] lg:w-[calc(66%-2rem)] max-w-3xl bg-white border border-slate-200 rounded-lg shadow-xl max-h-96 overflow-y-auto mt-1">
               {products.map((p, idx) => (
                 <div 
                   key={p._id}
@@ -195,7 +195,7 @@ export default function CreateOrder() {
 
         {/* Order Items Table */}
         <div className="flex-1 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-          <div className="overflow-y-auto flex-1">
+          <div className="overflow-y-auto overflow-x-auto flex-1">
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-100 text-slate-600 text-sm sticky top-0 shadow-sm z-0">
                 <tr>
@@ -294,7 +294,7 @@ export default function CreateOrder() {
       </div>
 
       {/* RIGHT: Order Settings & Submission */}
-      <div className="w-1/3 bg-white rounded-lg shadow-sm border border-slate-200 p-6 flex flex-col">
+      <div className="w-full lg:w-1/3 bg-white rounded-lg shadow-sm border border-slate-200 p-6 flex flex-col">
         <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Order Details</h3>
         
         <div className="mb-4">

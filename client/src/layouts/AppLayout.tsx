@@ -117,7 +117,7 @@ export default function AppLayout() {
         </div>
       )}
 
-      <main className="flex-1 min-w-0 pt-14 md:pt-0">
+      <main className="flex-1 min-w-0 pt-14 pb-16 md:pt-0 md:pb-0">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
           <Outlet />
         </div>
@@ -125,7 +125,7 @@ export default function AppLayout() {
 
       {/* Mobile bottom nav for the most-used screens */}
       <nav className="print-hidden md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 flex justify-around py-2">
-        {[navItems[0], navItems[1], navItems[2], navItems[4]].map((item) => (
+        {navItems.filter(i => ["/", "/pos", "/orders", "/customers"].includes(i.to)).slice(0, 4).map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
