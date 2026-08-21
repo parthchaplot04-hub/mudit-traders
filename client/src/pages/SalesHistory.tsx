@@ -1,23 +1,33 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { format } from "date-fns";
-import { Eye, X, ChevronLeft, ChevronRight, FileText, Package } from "lucide-react";
+import { Eye, X, ChevronLeft, ChevronRight, FileText, Package, Search } from "lucide-react";
 
 export default function SalesHistory() {
   const [sales, setSales] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedSale, setSelectedSale] = useState<any | null>(null);
 
   const limit = 25;
 
   useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  useEffect(() => {
     async function fetchSales() {
       setLoading(true);
       try {
         const res = await axios.get("/api/sales", {
-          params: { page, limit },
+          params: { page, limit, q: debouncedSearch || undefined },
           withCredentials: true
         });
         
@@ -33,18 +43,31 @@ export default function SalesHistory() {
     }
 
     fetchSales();
-  }, [page]);
+  }, [page, debouncedSearch]);
 
   const totalPages = Math.ceil(total / limit) || 1;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
-          <FileText className="h-6 w-6 text-emerald-600" />
-          Sales History
-        </h1>
-        <p className="text-slate-500 text-sm mt-1">View all past POS sales and their details.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
+            <FileText className="h-6 w-6 text-emerald-600" />
+            Bill History
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">View all past POS and Order bills.</p>
+        </div>
+        
+        <div className="relative w-full sm:w-72 print:hidden">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search by Bill No or Customer..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">

@@ -20,9 +20,27 @@ export async function createSale(req: AuthedRequest, res: Response) {
 export async function listSales(req: AuthedRequest, res: Response) {
   const page = parseInt((req.query.page as string) || "1", 10);
   const limit = Math.min(parseInt((req.query.limit as string) || "25", 10), 100);
-  const filter: Record<string, unknown> = {};
+  const filter: any = {};
   if (req.query.status) filter.status = req.query.status;
   if (req.query.paymentType) filter.paymentType = req.query.paymentType;
+  
+  if (req.query.q) {
+    const q = req.query.q as string;
+    const regex = new RegExp(q, "i");
+    
+    // Find matching customers first
+    const mongoose = require("mongoose");
+    const Customer = mongoose.model("Customer");
+    const matchingCustomers = await Customer.find({ name: regex }, "_id");
+    const customerIds = matchingCustomers.map((c: any) => c._id);
+    
+    filter.$or = [
+      { billNumber: regex },
+      { customerName: regex },
+      { customerPhone: regex },
+      { customerId: { $in: customerIds } }
+    ];
+  }
 
   const [items, total] = await Promise.all([
     Sale.find(filter)
